@@ -46,6 +46,7 @@
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)..\bin\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)\intermediate\$(Configuration)\</IntDir>
+    <IncludePath>../src/OpenGLRelated/;../src/;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -55,6 +56,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>..src/OpenGLRelated/include/GLTools/include/;..src/OpenGLRelated/include/glew/;..src/OpenGLRelated/include/glfw/</AdditionalIncludeDirectories>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -85,6 +87,23 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Xml" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\OpenGLRelated\LoadShaderUtility.h" />
+    <ClInclude Include="..\src\OpenGLViewer.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\Shaders\instancedVoxel_FragmentShader.glsl" />
+    <None Include="..\src\Shaders\instancedVoxel_VertexShader.glsl" />
+    <None Include="..\src\Shaders\particle_FragmentShader.glsl" />
+    <None Include="..\src\Shaders\particle_VertexShader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

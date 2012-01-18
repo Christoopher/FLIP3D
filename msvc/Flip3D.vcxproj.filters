@@ -13,10 +13,35 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Resource Files\Shaders">
+      <UniqueIdentifier>{1595e3fd-2755-480d-8816-3a90fa7c6f94}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\OpenGLViewer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\OpenGLRelated\LoadShaderUtility.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\Shaders\particle_VertexShader.glsl">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="..\src\Shaders\particle_FragmentShader.glsl">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="..\src\Shaders\instancedVoxel_VertexShader.glsl">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="..\src\Shaders\instancedVoxel_FragmentShader.glsl">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
   </ItemGroup>
 </Project>
