@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 #include <stdarg.h>
+#include <sstream>
+#include <string>
 
 #include "glew.h"
 #include "wglew.h"
@@ -56,13 +58,18 @@ int filelength(const char *filename) {
 //----------------------------------------------------------------------------//
 char* readShaderFile(const char *filename) 
 {
-	FILE *file = fopen(filename, "r");
+	std::stringstream ss;
+	ss << "../../src/Shaders/" << filename;
+	std::string fullPath;
+	ss >> fullPath;
+
+	FILE *file = fopen( fullPath.c_str(), "r");
 	if(file == NULL)
 	{
 		printError("I/O error", "Cannot open shader file!");
 		return 0;
 	}
-	int bytesinfile = filelength(filename);
+	int bytesinfile = filelength(fullPath.c_str());
 	
 	if(bytesinfile == NULL)
 	{

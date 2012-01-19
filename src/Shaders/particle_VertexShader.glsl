@@ -3,10 +3,13 @@
 uniform mat4 projectionMatrix;
 uniform mat4 modelViewMatrix;
 
-in vec4 vertex;
-inout vec3 velocity; //might not work with inout
+in vec3 velocity;
+in vec3 vertex;
+
+out vec3 color;
  
 void main(void)
-{
-	gl_Position = projectionMatrix*modelViewMatrix*vertex;
+{	
+	color = velocity;
+	gl_Position = projectionMatrix*modelViewMatrix*vec4(vertex,1.0);
 }

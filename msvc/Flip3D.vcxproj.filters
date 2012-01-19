@@ -21,6 +21,9 @@
     <ClCompile Include="..\src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\OpenGLRelated\include\GLTools\src\math3d.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\OpenGLViewer.h">
@@ -29,19 +32,5 @@
     <ClInclude Include="..\src\OpenGLRelated\LoadShaderUtility.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\src\Shaders\particle_VertexShader.glsl">
-      <Filter>Resource Files\Shaders</Filter>
-    </None>
-    <None Include="..\src\Shaders\particle_FragmentShader.glsl">
-      <Filter>Resource Files\Shaders</Filter>
-    </None>
-    <None Include="..\src\Shaders\instancedVoxel_VertexShader.glsl">
-      <Filter>Resource Files\Shaders</Filter>
-    </None>
-    <None Include="..\src\Shaders\instancedVoxel_FragmentShader.glsl">
-      <Filter>Resource Files\Shaders</Filter>
-    </None>
   </ItemGroup>
 </Project>

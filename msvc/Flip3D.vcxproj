@@ -41,6 +41,7 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)..\bin\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)\intermediate\$(Configuration)\</IntDir>
+    <IncludePath>../src/OpenGLRelated/;../src/;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
@@ -55,7 +56,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>..src/OpenGLRelated/include/GLTools/include/;..src/OpenGLRelated/include/glew/;..src/OpenGLRelated/include/glfw/</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../src/OpenGLRelated/include/GLTools/include/;../src/OpenGLRelated/include/glew/;../src/OpenGLRelated/include/glfw/;../src/OpenGLRelated/include/GLTools/src/;</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
@@ -74,7 +75,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../src/OpenGLRelated/include/GLTools/include/;../src/OpenGLRelated/include/glew/;../src/OpenGLRelated/include/glfw/</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../src/OpenGLRelated/include/GLTools/include/;../src/OpenGLRelated/include/glew/;../src/OpenGLRelated/include/glfw/;../src/OpenGLRelated/include/GLTools/src/;</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -87,6 +88,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp" />
+    <ClCompile Include="..\src\OpenGLRelated\include\GLTools\src\math3d.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -98,12 +100,6 @@
   <ItemGroup>
     <ClInclude Include="..\src\OpenGLRelated\LoadShaderUtility.h" />
     <ClInclude Include="..\src\OpenGLViewer.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="..\src\Shaders\instancedVoxel_FragmentShader.glsl" />
-    <None Include="..\src\Shaders\instancedVoxel_VertexShader.glsl" />
-    <None Include="..\src\Shaders\particle_FragmentShader.glsl" />
-    <None Include="..\src\Shaders\particle_VertexShader.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
