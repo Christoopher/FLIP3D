@@ -256,23 +256,19 @@ void OpenGl_updateParticleLocation(void * vertices, size_t size)
 }
 
 //----------------------------------------------------------------------------//
-// Update voxel locations
+// Update voxels locations and flags
 //----------------------------------------------------------------------------//
-void OpenGl_updateVoxelLocation(void * positions, int nrOfVoxels)
+void OpenGl_updateVoxels(void * positions,void * flags, int nrOfVoxels_)
 {
+	nrOfVoxels = nrOfVoxels_*nrOfVoxels_*nrOfVoxels_;
+	size_t PosSize = 3*sizeof(float)*nrOfVoxels;
+	size_t FlagSize = sizeof(float)*nrOfVoxels;
 	glBindBuffer(GL_ARRAY_BUFFER ,unitWFCube_flags_and_postions_VBO);
-	glBufferSubData(GL_ARRAY_BUFFER,0, 3*sizeof(float)*nrOfVoxels,positions);
+	glBufferSubData(GL_ARRAY_BUFFER,0, PosSize,positions);
+	glBufferSubData(GL_ARRAY_BUFFER,PosSize, FlagSize,flags);
 	glBindBuffer(GL_ARRAY_BUFFER,0);
-}
 
-//----------------------------------------------------------------------------//
-// Update voxel flags
-//----------------------------------------------------------------------------//
-void OpenGl_updateVoxelFlagLocation(void * flags, size_t size)
-{
-	glBindBuffer(GL_ARRAY_BUFFER ,unitWFCube_flags_and_postions_VBO);
-	glBufferSubData(GL_ARRAY_BUFFER,3*sizeof(float)*nrOfVoxels, sizeof(float)*nrOfVoxels,flags);
-	glBindBuffer(GL_ARRAY_BUFFER,0);
+	glVertexAttribPointer(instancedVoxel_FlagLocation, 1, GL_FLOAT, GL_FALSE,0, (GLvoid *)PosSize );
 }
 
 //----------------------------------------------------------------------------//
@@ -294,7 +290,7 @@ void Resize()
 //----------------------------------------------------------------------------//
 // Draws particles to screen
 //----------------------------------------------------------------------------//
-void OpenGl_DrawParticles() 
+void DrawParticles() 
 {
 	glUseProgram(particle_SP);
 	glBindVertexArray(particle_VAO);
@@ -302,9 +298,25 @@ void OpenGl_DrawParticles()
 	glUniformMatrix4fv(particle_ProjectionMtxLocation, 1, GL_FALSE, transformPipeline.GetProjectionMatrix());
 	getOpenGLError();
 
-	glPointSize(1.0);
+	glPointSize(2.0);
 	glDrawArrays(GL_POINTS,0,nrOfParticles);
 	getOpenGLError();
+	glBindVertexArray(0);
+}
+
+
+//----------------------------------------------------------------------------//
+// Draw Voxels to screen
+//----------------------------------------------------------------------------//
+void DrawVoxels() 
+{
+	glUseProgram(instancedVoxel_SP);
+	glBindVertexArray(unitWFCube_VAO);
+	glUniformMatrix4fv(instancedVoxel_ModelViewMtxLocation, 1, GL_FALSE, transformPipeline.GetModelViewMatrix());
+	glUniformMatrix4fv(instancedVoxel_ProjectionMtxLocation, 1, GL_FALSE, transformPipeline.GetProjectionMatrix());
+	glEnable (GL_BLEND);
+	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glDrawElementsInstanced(GL_LINES, 2*12, GL_UNSIGNED_INT, 0, nrOfVoxels);
 	glBindVertexArray(0);
 }
 
@@ -337,21 +349,13 @@ void OpenGl_drawAndUpdate(bool &running)
 	modelViewMatrix.Rotate(-rotDx,1.0f,0.0f,0.0f);
 	modelViewMatrix.Rotate(-rotDy,0.0f,1.0f,0.0f);	
 
-	//OpenGl_DrawParticles();
+	DrawParticles();
 	
-	getOpenGLError();
-	glUseProgram(instancedVoxel_SP);
-	glBindVertexArray(unitWFCube_VAO);
-	getOpenGLError();
+	modelViewMatrix.Translate(-5.0,-5.0,-5.0);
+		
+	DrawVoxels();
 
-	glUniformMatrix4fv(instancedVoxel_ModelViewMtxLocation, 1, GL_FALSE, transformPipeline.GetModelViewMatrix());
-	glUniformMatrix4fv(instancedVoxel_ProjectionMtxLocation, 1, GL_FALSE, transformPipeline.GetProjectionMatrix());
-	glEnable (GL_BLEND);
-	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glDrawElementsInstanced(GL_LINES, 2*12, GL_UNSIGNED_INT, 0, nrOfVoxels);
-	getOpenGLError();
-	glBindVertexArray(0);
-
+	
 	modelViewMatrix.PopMatrix();
 	
 	glfwSwapBuffers();

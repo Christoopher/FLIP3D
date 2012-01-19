@@ -100,6 +100,9 @@
   <ItemGroup>
     <ClInclude Include="..\src\OpenGLRelated\LoadShaderUtility.h" />
     <ClInclude Include="..\src\OpenGLViewer.h" />
+    <ClInclude Include="..\src\Particles.h" />
+    <ClInclude Include="..\src\util.h" />
+    <ClInclude Include="..\src\Vector3.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\Shaders\instancedVoxel_FragmentShader.glsl" />

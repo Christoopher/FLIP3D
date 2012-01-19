@@ -1,8 +1,10 @@
 #include <iostream>
 #include "OpenGLViewer.h"
+#include "Particles.h"
 
 bool running = true;
-const int N = 100000;
+const int Nparticles = 1000;
+const int Nvoxels = 10;
 
 void moveParticles(float * verticies, float dt)
 {
@@ -10,12 +12,12 @@ void moveParticles(float * verticies, float dt)
 	
 	float* pos = verticies;
 
-	for (int i = 0; i<N; ++i)
+	for (int i = 0; i<Nparticles; ++i)
 	{
 
-		*pos++ = *pos + dt* sin(2.0*((float(rand()) / RAND_MAX) - 0.5)); //x
-		*pos++ = *pos + dt* sin(2.0*((float(rand()) / RAND_MAX) - 0.5)); //y
-		*pos++ = *pos + dt* sin(2.0*((float(rand()) / RAND_MAX) - 0.5)); //z		
+		*pos++ = *pos + dt* 2.0*((float(rand()) / RAND_MAX) - 0.5); //x
+		*pos++ = *pos + dt* 2.0*((float(rand()) / RAND_MAX) - 0.5); //y
+		*pos++ = *pos + dt* 2.0*((float(rand()) / RAND_MAX) - 0.5); //z		
 	}
 }
 
@@ -29,6 +31,7 @@ void initVoxels(float * voxelPositions, float * voxelFlags, int k)
 		{
 			for (int z = 0; z < k; ++z)
 			{
+
 				*posItr++ = x;
 				*posItr++ = y;
 				*posItr++ = z;
@@ -41,31 +44,38 @@ void initVoxels(float * voxelPositions, float * voxelFlags, int k)
 
 int main(void)
 {
-	float * verticies = new float[3*N];
-	float * velocities = new float[3*N];
+	float * verticies = new float[3*Nparticles];
+	float * velocities = new float[3*Nparticles];
 
-	float * voxelPositions = new float[3*10*10*10];
-	float * voxelFlags = new float[10*10*10]; 
-	initVoxels(voxelPositions,voxelFlags,10);
+	float * voxelPositions = new float[3*Nvoxels*Nvoxels*Nvoxels];
+	float * voxelFlags = new float[Nvoxels*Nvoxels*Nvoxels]; 
+	initVoxels(voxelPositions,voxelFlags,Nvoxels);
 
-	for(int i =0; i<3*N; i++)
+	for(int i =0; i<3*Nparticles; i++)
 	{
-		verticies[i] = 2*2.0*((float(rand()) / RAND_MAX) - 0.5);
+		verticies[i] = 5*2.0*((float(rand()) / RAND_MAX) - 0.5);
 		velocities[i] = float(rand()) / RAND_MAX;
 	}
 
 	OpenGl_initViewer(600, 600);
-	//OpenGl_initParticles(verticies, velocities, sizeof(float)*N*3, N);
-	OpenGl_initWireframeCube(voxelPositions,voxelFlags,10);
+	OpenGl_initParticles(verticies, velocities, sizeof(float)*Nparticles*3, Nparticles);
+	OpenGl_initWireframeCube(voxelPositions,voxelFlags,Nvoxels);
 	
+	int iterations = 0;
 	while(running)
 	{
 
 		OpenGl_drawAndUpdate(running);
 
-		//moveParticles(verticies, 0.1);
-		//OpenGl_updateParticleLocation(verticies, sizeof(float)*N*3);
-
+		if(iterations > 200)
+		{
+			initVoxels(voxelPositions,voxelFlags,Nvoxels);
+			OpenGl_updateVoxels(voxelPositions, voxelFlags, Nvoxels);
+			iterations = 0;
+		}
+		moveParticles(verticies, 0.1);
+		OpenGl_updateParticleLocation(verticies, sizeof(float)*Nparticles*3);
+		++iterations;
 	}
 
 	delete [] verticies;
