@@ -101,6 +101,12 @@
     <ClInclude Include="..\src\OpenGLRelated\LoadShaderUtility.h" />
     <ClInclude Include="..\src\OpenGLViewer.h" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\src\Shaders\instancedVoxel_FragmentShader.glsl" />
+    <None Include="..\src\Shaders\instancedVoxel_VertexShader.glsl" />
+    <None Include="..\src\Shaders\particle_FragmentShader.glsl" />
+    <None Include="..\src\Shaders\particle_VertexShader.glsl" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
