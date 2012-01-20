@@ -8,7 +8,8 @@
 struct vec3f
 {
 	float v[3];
-	vec3f(float v_) { v[0] = v[1] = v[2] = 0; }
+	vec3f() { v[0] = v[1] = v[2] = 0; }
+	vec3f(float v_) { v[0] = v[1] = v[2] = v_; }
 	vec3f(float x, float y, float z) {v[0] = x; v[1] = y; v[2] = z; }
 	vec3f(vec3f & source) { v[0] = source.v[0]; v[1] = source.v[1]; v[2] = source.v[2]; }
 	float & operator[](int index) {return v[index]; }

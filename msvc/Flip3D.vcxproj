@@ -89,6 +89,7 @@
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\OpenGLRelated\include\GLTools\src\math3d.cpp" />
+    <ClCompile Include="..\src\Particles.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -98,6 +99,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\Grid.h" />
     <ClInclude Include="..\src\OpenGLRelated\LoadShaderUtility.h" />
     <ClInclude Include="..\src\OpenGLViewer.h" />
     <ClInclude Include="..\src\Particles.h" />
