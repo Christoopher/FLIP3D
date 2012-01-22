@@ -89,7 +89,6 @@
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\OpenGLRelated\include\GLTools\src\math3d.cpp" />
-    <ClCompile Include="..\src\Particles.cpp" />
     <ClCompile Include="..\src\Timing\hr_time.cpp" />
   </ItemGroup>
   <ItemGroup>

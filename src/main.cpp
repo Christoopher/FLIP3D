@@ -1,9 +1,8 @@
 
 #include <iostream>
 #include "OpenGLViewer.h"
+#include "Vector3.h"
 #include "Particles.h"
-#include "SSEVector3.h"
-
 #include <stdio.h>
 
 #include <xmmintrin.h>
@@ -13,23 +12,8 @@
 #include <limits>
 
 bool running = true;
-const int Nparticles = 1000;
+const int Nparticles = 1000000;
 const int Nvoxels = 10;
-
-
-
-void moveParticles(float * verticies, float dt)
-{
-  int stride = 3;
-  
-  float* pos = verticies;	
-  
-  for (int i = 0; i<Nparticles; ++i) {
-	*pos++ = *pos + dt* 2.0*((float(rand()) / RAND_MAX) - 0.5); //x
-	*pos++ = *pos + dt* 2.0*((float(rand()) / RAND_MAX) - 0.5); //y
-	*pos++ = *pos + dt* 2.0*((float(rand()) / RAND_MAX) - 0.5); //z		
-  }
-}
 
 void initVoxels(float * voxelPositions, float * voxelFlags, int k)
 {
@@ -49,39 +33,49 @@ void initVoxels(float * voxelPositions, float * voxelFlags, int k)
 
 }
 
+void TestSSE() 
+{
+	vec3f v1(0.0f);
+	vec3f v2(1.0f);
+
+	CStopWatch time;
+	INT64 iterations = 0, additions = 100000000;
+	time.startTimer();
+
+	while(iterations < additions)
+	{
+		v1+=v2;
+		iterations++;
+	}
+	time.stopTimer();
+	std::cout << time.getElapsedTime() << std::endl;
+	std::cout << v1 << std::endl;
+	std::cout << v2 << std::endl;
+	std::cin.get();
+}
+
 int main(void)
 {
-// 	vec3f v1(0.0f);
-// 	vec3f v2(1.0f);
-// 	
-// 	CStopWatch time;
-// 	INT64 iterations = 0, additions = 100000000;
-// 	time.startTimer();
-// 
-// 	while(iterations < additions)
-// 	{
-// 		v1+=v2;
-// 		iterations++;
-// 	}
-// 	time.stopTimer();
-// 	std::cout << time.getElapsedTime() << std::endl;
-// 	std::cout << v1 << std::endl;
-// 	std::cout << v2 << std::endl;
-// 	std::cin.get();
+   float * verticies = new float[3*Nparticles];
+   float * velocities = new float[3*Nparticles];
 
-  float * verticies = new float[3*Nparticles];
-  float * velocities = new float[3*Nparticles];
+  Particles particles(Nparticles);
+  
   float * voxelPositions = new float[3*Nvoxels*Nvoxels*Nvoxels];
   float * voxelFlags = new float[Nvoxels*Nvoxels*Nvoxels]; 
-
   initVoxels(voxelPositions,voxelFlags,Nvoxels);
 
-  for(int i =0; i<3*Nparticles; i++){
-		verticies[i] = 5*2.0*((float(rand()) / RAND_MAX) - 0.5);
-		velocities[i] = float(rand()) / RAND_MAX;
+
+  for(int i =0; i<Nparticles; i++){
+	  vec3f newpos(5*2.0*((float(rand()) / RAND_MAX) - 0.5),5*2.0*((float(rand()) / RAND_MAX) - 0.5),5*2.0*((float(rand()) / RAND_MAX) - 0.5));
+	  vec3f newvel(2.0*((float(rand()) / RAND_MAX) - 0.5), 2.0*((float(rand()) / RAND_MAX) - 0.5), 2.0*((float(rand()) / RAND_MAX) - 0.5));
+	  
+	  add_particle(particles, newpos, newvel);
   }
 
   OpenGl_initViewer(600, 600);
+  get_position_larray(particles, verticies);
+  get_velocity_larray(particles, velocities);
   OpenGl_initParticles(verticies, velocities, sizeof(float)*Nparticles*3, Nparticles);
   OpenGl_initWireframeCube(voxelPositions,voxelFlags,Nvoxels);
   
@@ -95,7 +89,8 @@ int main(void)
 	  iterations = 0;
 	}
 
-	moveParticles(verticies, 0.1);
+	advect_particles(particles,0.1);
+	get_position_larray(particles, verticies);
 	OpenGl_updateParticleLocation(verticies, sizeof(float)*Nparticles*3);
 	++iterations;
   }

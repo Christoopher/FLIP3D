@@ -353,7 +353,7 @@ void OpenGl_drawAndUpdate(bool &running)
 	
 	modelViewMatrix.Translate(-5.0,-5.0,-5.0);
 		
-	DrawVoxels();
+	//DrawVoxels();
 
 	
 	modelViewMatrix.PopMatrix();

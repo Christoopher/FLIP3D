@@ -27,9 +27,6 @@
     <ClCompile Include="..\src\OpenGLRelated\include\GLTools\src\math3d.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\Particles.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\Timing\hr_time.cpp">
       <Filter>Header Files\Timer</Filter>
     </ClCompile>
@@ -44,9 +41,6 @@
     <ClInclude Include="..\src\Vector3.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\Particles.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\util.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -57,6 +51,9 @@
       <Filter>Header Files\Timer</Filter>
     </ClInclude>
     <ClInclude Include="..\src\SSEVector3.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\Particles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
