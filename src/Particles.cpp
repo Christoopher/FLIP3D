@@ -31,7 +31,7 @@ void get_velocity_larray(Particles & particles, float velArray[])
 //----------------------------------------------------------------------------//
 // Adds a particle to the particles struct
 //----------------------------------------------------------------------------//
-inline void add_particle(Particles & particles, vec3f pos, vec3f vel)
+inline void add_particle(Particles & particles, vec3f & pos, vec3f & vel)
 {
 	particles.pos[particles.currnp] = pos;
 	particles.vel[particles.currnp] = vel;
