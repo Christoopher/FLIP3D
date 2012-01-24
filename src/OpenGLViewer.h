@@ -267,7 +267,7 @@ void OpenGl_updateVoxels(void * positions,void * flags, int nrOfVoxels_)
 	glBufferSubData(GL_ARRAY_BUFFER,0, PosSize,positions);
 	glBufferSubData(GL_ARRAY_BUFFER,PosSize, FlagSize,flags);
 	glBindBuffer(GL_ARRAY_BUFFER,0);
-
+	getOpenGLError();
 	glVertexAttribPointer(instancedVoxel_FlagLocation, 1, GL_FLOAT, GL_FALSE,0, (GLvoid *)PosSize );
 }
 
@@ -280,7 +280,7 @@ void Resize()
 	glViewport(0, 0, winw, winh);
 
 	// Calculate the projection matrix and bind it to shader
-	viewFrustum.SetPerspective(45.0f, (GLfloat) winw / (GLfloat) winh, 1.0f, 100.0f);	
+	viewFrustum.SetPerspective(45.0f, (GLfloat) winw / (GLfloat) winh, 1.0f, 1000.0f);	
 
 	projectionMatrix.LoadMatrix(viewFrustum.GetProjectionMatrix());
 
@@ -343,7 +343,7 @@ void OpenGl_drawAndUpdate(bool &running)
 
 	//Camera Matrix
 	M3DMatrix44f mCamera;
-	cameraFrame.GetCameraMatrix(mCamera);	
+	cameraFrame.GetCameraMatrix(mCamera);		
 	modelViewMatrix.PushMatrix(mCamera);
 	modelViewMatrix.Translate(0.0f,0.0f,zoom);
 	modelViewMatrix.Rotate(-rotDx,1.0f,0.0f,0.0f);
@@ -351,9 +351,9 @@ void OpenGl_drawAndUpdate(bool &running)
 
 	DrawParticles();
 	
-	modelViewMatrix.Translate(-5.0,-5.0,-5.0);
+	//modelViewMatrix.Translate(-5.0,-5.0,-5.0);
 		
-	//DrawVoxels();
+	DrawVoxels();
 
 	
 	modelViewMatrix.PopMatrix();
@@ -448,7 +448,7 @@ void OpenGl_initViewer(int width_, int height_)
 	initShaders();
 
 	//Move the camera back 5 units
-	cameraFrame.SetOrigin(0.0f,0.0f,10.0f);
+	cameraFrame.SetOrigin(0.0f,0.0f,30.0f);
 }
 
 

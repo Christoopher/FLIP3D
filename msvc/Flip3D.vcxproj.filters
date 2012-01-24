@@ -56,6 +56,9 @@
     <ClInclude Include="..\src\Particles.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\Array3D.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\Shaders\particle_VertexShader.glsl">

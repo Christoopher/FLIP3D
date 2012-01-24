@@ -72,16 +72,15 @@ struct vec3f
 
 
 inline float mag2(const vec3f &a)
-{ 
+{ 	
 	
-	__m128 ma = _mm_setr_ps(a.v[0],a.v[1],a.v[2],0.0f);
-	float sum[4];
-	__m128 * msum = (__m128 *) sum;
-	*msum = _mm_mul_ps(ma, ma); // sum = { v0*a0, v1*a1, v2*a2, 0 }
-	*msum = _mm_hadd_ps(*msum, *msum); // sum = { v0*a0 + v1*a1, v2*a2 + 0, v0*a0 + v1*a1, v2*a2 + 0}
-	*msum = _mm_hadd_ps(*msum, *msum); // sum = { v0*a0 + v1*a1 + v2*a2 + 0 , ... }
+	__m128 ma1 = _mm_set_ps(a.v[0],a.v[1],a.v[2],0.0f);
+	__m128 ma2 = _mm_set_ps(a.v[0],a.v[1],a.v[2],0.0f);
+	__m128 msum = _mm_mul_ps(ma1, ma2); // sum = { v0*a0, v1*a1, v2*a2, 0 }
+	msum = _mm_hadd_ps(msum, msum); // sum = { v0*a0 + v1*a1, v2*a2 + 0, v0*a0 + v1*a1, v2*a2 + 0}
+	msum = _mm_hadd_ps(msum, msum); // sum = { v0*a0 + v1*a1 + v2*a2 + 0 , ... }
 	
-	return sum[0];
+	return msum.m128_f32[0];
 
 	//return a.v[0]*a.v[0] + a.v[1]*a.v[1] + a.v[2]*a.v[2]; 
 }

@@ -8,6 +8,6 @@ void main(void)
 {
 	//Do velocity based shading here
 	//Code
-	vec3 poo = abs(color);
+	vec3 poo = mix(vec3(1.0f),vec3(1.0f),smoothstep(0.0,1.0,sqrt(length(color))));
 	fragColor = vec4(poo,1.0);
 }

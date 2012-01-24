@@ -99,6 +99,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\Array3D.h" />
     <ClInclude Include="..\src\Grid.h" />
     <ClInclude Include="..\src\OpenGLRelated\LoadShaderUtility.h" />
     <ClInclude Include="..\src\OpenGLViewer.h" />
