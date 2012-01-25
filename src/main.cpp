@@ -15,7 +15,7 @@
 #include <limits>
 
 bool running = true;
-const int Nparticles = 1;
+const int Nparticles = 4;
 const int Nvoxels = 10;
 const float h = 1.0f/Nvoxels;
 
@@ -91,11 +91,6 @@ int main(void)
 	Particles particles(Nparticles,grid);
 	
 
-	OpenGl_initViewer(600, 600);
-	get_position_larray(particles, verticies);
-	get_velocity_larray(particles, velocities);
-	OpenGl_initParticles(verticies, velocities, sizeof(float)*3, 1);
-	OpenGl_initWireframeCube(voxelPositions,voxelFlags.data,Nvoxels);
 
 	
 // 	for(int i =0; i<Nparticles; i++){
@@ -105,7 +100,16 @@ int main(void)
 // 		add_particle(particles, newpos, newvel);
 // 	}
 
+	add_particle(particles,vec3f(0.5f*h,h*9.5f,0.5f*h), vec3f(0.0f));
+	add_particle(particles,vec3f(0.5f*h,h*9.5f,h*9.5f), vec3f(0.0f));
+	add_particle(particles,vec3f(h*9.5f,h*9.5f,0.5f*h), vec3f(0.0f));
 	add_particle(particles,vec3f(h*9.5f,h*9.5f,h*9.5f), vec3f(0.0f));
+
+	OpenGl_initViewer(600, 600);
+	get_position_larray(particles, verticies);
+	get_velocity_larray(particles, velocities);
+	OpenGl_initParticles(verticies, velocities, sizeof(float)*3*Nparticles, Nparticles);
+	OpenGl_initWireframeCube(voxelPositions,voxelFlags.data,Nvoxels);
 
 	while(running) {
 		OpenGl_drawAndUpdate(running);
@@ -119,7 +123,7 @@ int main(void)
 		advect_particles(particles,0.0001f);
 
 		get_position_larray(particles, verticies);
-		OpenGl_updateParticleLocation(verticies, sizeof(float)*3);
+		OpenGl_updateParticleLocation(verticies, sizeof(float)*3*Nparticles);
 		update_voxel_flags(grid,voxelFlags);
 		OpenGl_updateVoxels(voxelPositions, voxelFlags.data, Nvoxels);
 
@@ -127,8 +131,7 @@ int main(void)
 
 	delete [] verticies;
 	delete [] velocities;
-	//delete [] voxelFlags;
-	//delete [] voxelPositions;
+	delete [] voxelPositions;
 
 	return 0;
 }

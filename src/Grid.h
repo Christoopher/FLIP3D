@@ -115,12 +115,10 @@ struct Grid
 
 	void apply_boundary_conditions() //As of know we set zero on the boundary floor
 	{
-		int i,j,k;
-		for(k=0; k<v.nz; ++k)
-			for(j = 0; j < 1; ++j)
-				for(i=0; i < v.nx; ++i)
+		for(int k=0; k<v.nz; ++k)
+			for(int i=0; i < v.nx; ++i)
 				{
-					v(i,j,k) = 0;
+					v(i,0,k) = 0;
 				}
 	}
 
