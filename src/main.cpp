@@ -75,6 +75,40 @@ void update_voxel_flags(Grid & grid, Array3f & flags)
 	}
 }
 
+//----------------------------------------------------------------------------//
+// Iterates fluid solver on timestep
+//----------------------------------------------------------------------------//
+void Solve(float timestep, Grid & grid, Particles & particles)
+{
+	int iterations = 0;
+	std::cout << std::scientific;
+	for(float elapsed = 0; elapsed < timestep;)
+	{
+		//Fetch max timestep
+		float dt = grid.CFL();
+		//std::cout << dt << "\n";
+		if( dt > timestep - elapsed)
+			dt = timestep - elapsed;
+
+		elapsed += dt;
+
+		transfer_to_grid(particles,grid);
+		grid.save_velocities();
+		grid.add_gravity(dt);
+		grid.apply_boundary_conditions();
+		grid.get_velocity_update();
+		update_from_grid(particles,grid);
+		advect_particles(particles,dt);
+		iterations++;
+	}
+
+	//std::cout << "iterations: " << iterations << " timestep:" << timestep <<  "\n";
+}
+
+
+
+
+
 int main(void)
 {
 
@@ -90,9 +124,7 @@ int main(void)
 	Grid grid(Nvoxels,Nvoxels,Nvoxels,h,9.82f);
 	Particles particles(Nparticles,grid);
 	
-
-
-	
+		
 // 	for(int i =0; i<Nparticles; i++){
 // 		vec3f newpos(5*2.0*((float(rand()) / RAND_MAX) - 0.5),5*2.0*((float(rand()) / RAND_MAX) - 0.5),5*2.0*((float(rand()) / RAND_MAX) - 0.5));
 // 		vec3f newvel(2.0*((float(rand()) / RAND_MAX) - 0.5), 2.0*((float(rand()) / RAND_MAX) - 0.5), 2.0*((float(rand()) / RAND_MAX) - 0.5));
@@ -111,16 +143,12 @@ int main(void)
 	OpenGl_initParticles(verticies, velocities, sizeof(float)*3*Nparticles, Nparticles);
 	OpenGl_initWireframeCube(voxelPositions,voxelFlags.data,Nvoxels);
 
+
+	float dt = 10e-5;
 	while(running) {
 		OpenGl_drawAndUpdate(running);
 
-		transfer_to_grid(particles,grid);
-		grid.save_velocities();
-		grid.add_gravity(0.0001f);
-		grid.apply_boundary_conditions();
-		grid.get_velocity_update();
-		update_from_grid(particles,grid);
-		advect_particles(particles,0.0001f);
+		Solve(dt,grid, particles);
 
 		get_position_larray(particles, verticies);
 		OpenGl_updateParticleLocation(verticies, sizeof(float)*3*Nparticles);
@@ -135,3 +163,6 @@ int main(void)
 
 	return 0;
 }
+
+
+

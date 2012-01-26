@@ -16,6 +16,7 @@ struct Grid
 	Array3d p; //Pressure
 	Array3c marker; //Voxel classification
 
+	Grid() {}
 	
 	Grid(int Nx_, int Ny_, int Nz_, float h_, float gravity_) : Nx(Nx_), Ny(Ny_), Nz(Nz_), h(h_), overh(1.0f/h), gravity(gravity_)
 	{
@@ -120,6 +121,14 @@ struct Grid
 				{
 					v(i,0,k) = 0;
 				}
+	}
+
+	float CFL()
+	{
+		float maxvel = max(h*gravity,sqr(u.infnorm()) + sqr(v.infnorm()) + sqr(w.infnorm()));
+		if(maxvel < 10e-16)
+			maxvel = 10e-16;
+		return h/sqrtf(maxvel);
 	}
 
 };

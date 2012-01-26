@@ -14,6 +14,8 @@ struct Particles
 	vec3f *vel, *pos;
 	Array3f weightsumx,weightsumy,weightsumz;
 
+	Particles() {}
+
 	Particles(int maxParticles, Grid & grid)
 	{
 		maxnp = maxParticles;

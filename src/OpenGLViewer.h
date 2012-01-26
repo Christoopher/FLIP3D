@@ -28,6 +28,8 @@ int winw, winh;
 int lastmousex, lastmousey, lastwheelpos;
 float posDx = 0.0f, posDy = 0.0f, zoom = 0.0f, rotDx = 0.0f, rotDy = 0.0f;
 int nrOfParticles, nrOfVoxels;
+double t0 = 0;
+int frames = 0;
 
 //----------------------------------------------------------------------------//
 // Shaders
@@ -94,13 +96,18 @@ void getOpenGLError()
 	}
 }
 
+
+float getFPS(void)
+{
+	double t = glfwGetTime(); 
+	return (double)frames / (t - t0);
+
+}
 //----------------------------------------------------------------------------//
 // Display fps, winh, winw, zoom and title
 //----------------------------------------------------------------------------//
 void showFPS(int winw, int winh, float zoom) {
 
-	static double t0 = 0.0;
-	static int frames = 0;
 	static char titlestr[200];
 	double t, fps;
 	// Get current time
@@ -349,10 +356,10 @@ void OpenGl_drawAndUpdate(bool &running)
 	modelViewMatrix.Rotate(-rotDx,1.0f,0.0f,0.0f);
 	modelViewMatrix.Rotate(-rotDy,0.0f,1.0f,0.0f);	
 
-	DrawParticles();
+	modelViewMatrix.Translate(-5.0,-5.0,-5.0);
 	
-	//modelViewMatrix.Translate(-5.0,-5.0,-5.0);
 		
+	DrawParticles();
 	DrawVoxels();
 
 	
