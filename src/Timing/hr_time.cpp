@@ -16,16 +16,16 @@ CStopWatch::CStopWatch(){
 }
 
 void CStopWatch::startTimer( ) {
-    QueryPerformanceCounter(&timer.start);
+	QueryPerformanceCounter(&timer.start);
 }
 
 void CStopWatch::stopTimer( ) {
-    QueryPerformanceCounter(&timer.stop);
+	QueryPerformanceCounter(&timer.stop);
 }
 
 
 double CStopWatch::getElapsedTime() {
 	LARGE_INTEGER time;
 	time.QuadPart = timer.stop.QuadPart - timer.start.QuadPart;
-    return LIToSecs( time) ;
+	return LIToSecs( time) ;
 }

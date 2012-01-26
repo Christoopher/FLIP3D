@@ -23,7 +23,7 @@ template<class T> inline T max(const T &a1, const T &a2, const T &a3)
 	if(a1>a2) 
 		return max(a1,a3); 
 	else 
-		return max(a2,a3); 
+		return max(a2,a3);
 }
 
 template<class T> inline T max(const T &a1, const T &a2)
