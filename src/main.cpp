@@ -15,7 +15,8 @@
 
 
 bool running = true;
-const int Nparticles = 4;
+const int perCell = 256;
+const int Nparticles = 5*5*5*perCell;
 const int Nvoxels = 10;
 
 void initVoxels(float * voxelPositions, Array3f & voxelFlags, int k)
@@ -25,9 +26,9 @@ void initVoxels(float * voxelPositions, Array3f & voxelFlags, int k)
 	for (int x = 0; x < k; ++x) {
 		for (int y = 0; y < k; ++y) {
 			for (int z = 0; z < k; ++z) {
-				*posItr++ = x;
-				*posItr++ = y;
-				*posItr++ = z;	  
+				*posItr++ = (float)x;
+				*posItr++ = (float)y;
+				*posItr++ = (float)z;	  
 				voxelFlags(x,y,z) = 1.0;
 			}
 		}
@@ -138,27 +139,29 @@ void TestSparse()
 int main(void)
 {
 
-	float verticies[3*Nparticles];
-	float velocities[3*Nparticles];
+	float * verticies = new float[3*Nparticles];
+	float * velocities = new float[3*Nparticles];
 
-	//Array3f voxelFlags(Nvoxels,Nvoxels,Nvoxels);
-	//float * voxelPositions  = new float[3*Nvoxels*Nvoxels*Nvoxels];
-	//initVoxels(voxelPositions,voxelFlags,Nvoxels);
+	Array3f voxelFlags(Nvoxels,Nvoxels,Nvoxels);
+	float * voxelPositions  = new float[3*Nvoxels*Nvoxels*Nvoxels];
+	initVoxels(voxelPositions,voxelFlags,Nvoxels);
 
-	Fluid_Solver fluid_solver(Nvoxels,Nvoxels,Nvoxels,10e-6f,9.82f,4);
+	Fluid_Solver fluid_solver(Nvoxels,Nvoxels,Nvoxels,10e-4f,9.82f,1000,Nparticles);
 	
 
 	float h = fluid_solver.grid.h;
-	add_particle(fluid_solver.particles,vec3f(0.5f*h,h*9.5f,0.5f*h), vec3f(0.0f));
-	add_particle(fluid_solver.particles,vec3f(0.5f*h,h*9.5f,h*9.5f), vec3f(0.0f));
-	add_particle(fluid_solver.particles,vec3f(h*9.5f,h*9.5f,0.5f*h), vec3f(0.0f));
-	add_particle(fluid_solver.particles,vec3f(h*9.5f,h*9.5f,h*9.5f), vec3f(0.0f));
+// 	add_particle(fluid_solver.particles,vec3f(0.5f*h,h*9.5f,0.5f*h), vec3f(0.0f));
+// 	add_particle(fluid_solver.particles,vec3f(0.5f*h,h*9.5f,h*9.5f), vec3f(0.0f));
+// 	add_particle(fluid_solver.particles,vec3f(h*9.5f,h*9.5f,0.5f*h), vec3f(0.0f));
+// 	add_particle(fluid_solver.particles,vec3f(h*9.5f,h*9.5f,h*9.5f), vec3f(0.0f));
+
+	fluid_solver.init_box(11,perCell);
 
 	OpenGl_initViewer(600, 600);
 	get_position_larray(fluid_solver.particles, verticies);
 	get_velocity_larray(fluid_solver.particles, velocities);
 	OpenGl_initParticles(verticies, velocities, sizeof(float)*3*Nparticles, Nparticles);
-	//OpenGl_initWireframeCube(voxelPositions,voxelFlags.data,Nvoxels);
+	OpenGl_initWireframeCube(voxelPositions,voxelFlags.data,Nvoxels);
 
 
 	while(running) {
@@ -171,8 +174,8 @@ int main(void)
 		get_velocity_larray(fluid_solver.particles,velocities);
 		OpenGl_updateParticleVelocity(velocities,sizeof(float)*3*Nparticles);
 		
-		//update_voxel_flags(grid,voxelFlags);
-		//OpenGl_updateVoxels(voxelPositions, voxelFlags.data, Nvoxels);
+		update_voxel_flags(fluid_solver.grid,voxelFlags);
+		OpenGl_updateVoxels(voxelPositions, voxelFlags.data, Nvoxels);
 
 	}
 
