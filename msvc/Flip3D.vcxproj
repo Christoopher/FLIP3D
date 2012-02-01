@@ -100,10 +100,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\Array3D.h" />
+    <ClInclude Include="..\src\Fluid_Solver.h" />
     <ClInclude Include="..\src\Grid.h" />
     <ClInclude Include="..\src\OpenGLRelated\LoadShaderUtility.h" />
     <ClInclude Include="..\src\OpenGLViewer.h" />
     <ClInclude Include="..\src\Particles.h" />
+    <ClInclude Include="..\src\Sparse_Matrix.h" />
     <ClInclude Include="..\src\SSEVector3.h" />
     <ClInclude Include="..\src\Timing\hr_time.h" />
     <ClInclude Include="..\src\util.h" />

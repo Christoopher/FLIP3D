@@ -65,9 +65,15 @@ struct Array3{
 	T infnorm() const
 	{ 
 		T r=0;
-		for(int i=0; i<size; ++i)
-			if(!(std::fabs(data[i])<=r)) 
-				r=std::fabs(data[i]);
+// 		for(int i=0; i<size; ++i)
+// 			if(!(std::fabs(data[i])<=r)) 
+// 				r=std::fabs(data[i]);
+
+		float absval = 0;
+		for(T * itr= data; itr < data + size; ++itr)
+			if(!( (absval = std::fabs(*itr) ) <= r))
+				r = absval;
+
 		return r;
 	}
 

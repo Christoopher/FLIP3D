@@ -16,7 +16,12 @@ struct Particles
 
 	Particles() {}
 
-	Particles(int maxParticles, Grid & grid)
+	Particles(int maxParticles,Grid & grid)
+	{
+		init(maxParticles,grid);
+	}
+
+	void init(int maxParticles, Grid & grid)
 	{
 		maxnp = maxParticles;
 		currnp = 0;
@@ -25,7 +30,6 @@ struct Particles
 		weightsumx.init(grid.u.nx, grid.u.ny, grid.u.nz);
 		weightsumy.init(grid.v.nx, grid.v.ny, grid.v.nz);
 		weightsumz.init(grid.w.nx, grid.w.ny, grid.w.nz);
-
 	}
 
 	~Particles() 
@@ -43,7 +47,6 @@ struct Particles
 
 void update_from_grid(Particles & particles, Grid & grid)
 {
-	int p;
 	int i, ui, j, vj, k, wk;
 	float fx, ufx, fy, vfy, fz, wfz;
 	for (int p = 0; p < particles.currnp; ++p) //Loop over all particles
@@ -109,6 +112,9 @@ void transfer_to_grid(Particles & particles, Grid & grid)
 	int vi, vj, vk,i,j,k;
 	float fx, fy, fz;
 	grid.marker.zero();
+	grid.u.zero();
+	grid.v.zero();
+	grid.w.zero();
 	for (int p = 0; p < particles.currnp; ++p) //Loop over all particles
 	{
 		grid.bary_x(particles.pos[p][0],vi,fx);
@@ -163,16 +169,11 @@ void transfer_to_grid(Particles & particles, Grid & grid)
 //----------------------------------------------------------------------------//
 void advect_particles(Particles & particles, float dt)
 {
-	for (int i = 0; i < particles.currnp; ++i)
+	vec3f * velItr = particles.vel;
+	for (vec3f * ppos = particles.pos; ppos < particles.pos + particles.currnp; ++ppos )
 	{
-		particles.pos[i] += particles.vel[i]*dt;
+		*ppos += (*velItr++)*dt;
 	}
-
-// 	vec3f * velItr = particles.vel;
-// 	for (vec3f * ppos = particles.pos; ppos < ppos + particles.currnp; ppos++ )
-// 	{
-// 		*ppos += (*velItr++)*dt;
-// 	}
 }
 
 //----------------------------------------------------------------------------//
@@ -192,20 +193,12 @@ void get_velocity_larray(Particles & particles, float velArray[])
 {
 	float * itr = velArray;
 
-	for (int i = 0; i<particles.currnp; i++)
+	for (vec3f * pvel = particles.vel; pvel < particles.vel + particles.currnp; ++pvel )
 	{
-		*itr++ = particles.vel[i].v[0];
-		*itr++ = particles.vel[i].v[1];
-		*itr++ = particles.vel[i].v[2];
-
+		*itr++ = (*pvel)[0];
+		*itr++ = (*pvel)[1];
+		*itr++ = (*pvel)[2];		
 	}
-	
-// 	for (vec3f * pvel = particles.vel; pvel < pvel + particles.currnp; pvel++ )
-// 	{
-// 		*itr++ = (*pvel)[0];
-// 		*itr++ = (*pvel)[1];
-// 		*itr++ = (*pvel)[2];		
-// 	}
 }
 
 //----------------------------------------------------------------------------//
@@ -214,20 +207,11 @@ void get_velocity_larray(Particles & particles, float velArray[])
 void get_position_larray(Particles & particles, float posArray[])
 {
 	float * itr = posArray;
-	int i = 0;
-// 	for (vec3f * ppos = particles.pos; ppos < ppos + particles.currnp; ++ppos )
-// 	{
-// 		*itr++ = (*ppos)[0];
-// 		*itr++ = (*ppos)[1];
-// 		*itr++ = (*ppos)[2];
-// 		i++;
-// 	}
-	for (int i = 0; i<particles.currnp; i++)
+	for (vec3f * ppos = particles.pos; ppos < particles.pos + particles.currnp; ++ppos )
 	{
-		*itr++ = particles.pos[i].v[0]*10;
-		*itr++ = particles.pos[i].v[1]*10;
-		*itr++ = particles.pos[i].v[2]*10;
-
+		*itr++ = (*ppos)[0]*10;
+		*itr++ = (*ppos)[1]*10;
+		*itr++ = (*ppos)[2]*10;
 	}
 }
 

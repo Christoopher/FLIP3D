@@ -20,6 +20,13 @@ struct Grid
 	
 	Grid(int Nx_, int Ny_, int Nz_, float h_, float gravity_) : Nx(Nx_), Ny(Ny_), Nz(Nz_), h(h_), overh(1.0f/h), gravity(gravity_)
 	{
+		init(Nx_,Ny_,Nz_,h_,gravity_);
+	}
+
+	void init(int Nx_, int Ny_, int Nz_, float h_, float gravity_)
+	{
+		Nx = Nx_; Ny = Ny_; Nz = Nz_; h = h_; gravity = gravity_;
+		overh = 1.0f/h;
 		u.init(Nx_+1,Ny_,Nz_);
 		v.init(Nx_,Ny_+1,Nz_);
 		w.init(Nx_,Ny_,Nz_+1);
@@ -39,7 +46,7 @@ struct Grid
 
 	void bary_x_centre(float x, int &i, float &fx)
 	{
-		float sx=x*overh-0.5;
+		float sx=x*overh-0.5f;
 		i=(int)sx;
 		if(i<0){ 
 			i=0; fx=0.0; 
@@ -61,7 +68,7 @@ struct Grid
 
 	void bary_y_centre(float y, int &j, float &fy)
 	{
-		float sy=y*overh-0.5;
+		float sy=y*overh-0.5f;
 		j=(int)sy;
 		if(j<0){ j=0; fy=0.0; }
 		else if(j>p.ny-2){ j=p.ny-2; fy=1.0; }
@@ -77,7 +84,7 @@ struct Grid
 
 	void bary_z_centre(float z, int &k, float &fz)
 	{
-		float sz=z*overh-0.5;
+		float sz=z*overh-0.5f;
 		k=(int)sz;
 		if(k<0){ k=0; fz=0.0; }
 		else if(k>p.nz-2){ k=p.nz-2; fz=1.0; }
@@ -109,12 +116,14 @@ struct Grid
 	void add_gravity(float dt)
 	{
 		float gdt = gravity*dt;
-		int i;
-		for(i=0; i<v.size; ++i)
-			v.data[i] -= gdt;
+
+		for (float * itr = v.data; itr < v.data + v.size; ++itr)
+		{
+			*itr -= gdt;
+		}
 	}
 
-	void apply_boundary_conditions() //As of know we set zero on the boundary floor
+	void apply_boundary_conditions() //As of know we set zero on the boundary "floor"
 	{
 		for(int k=0; k<v.nz; ++k)
 			for(int i=0; i < v.nx; ++i)
@@ -125,9 +134,12 @@ struct Grid
 
 	float CFL()
 	{
-		float maxvel = max(h*gravity,sqr(u.infnorm()) + sqr(v.infnorm()) + sqr(w.infnorm()));
-		if(maxvel < 10e-16)
-			maxvel = 10e-16;
+		float maxu = u.infnorm();
+		float maxv = v.infnorm();
+		float maxw = w.infnorm();
+		float maxvel = max(h*gravity,sqr(maxu) + sqr(maxv) + sqr(maxw));
+		if(maxvel < 10e-16f)
+			maxvel = 10e-16f;
 		return h/sqrtf(maxvel);
 	}
 

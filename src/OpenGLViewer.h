@@ -100,7 +100,7 @@ void getOpenGLError()
 float getFPS(void)
 {
 	double t = glfwGetTime(); 
-	return (double)frames / (t - t0);
+	return (float)((double)frames / (t - t0));
 
 }
 //----------------------------------------------------------------------------//
@@ -263,6 +263,16 @@ void OpenGl_updateParticleLocation(void * vertices, size_t size)
 }
 
 //----------------------------------------------------------------------------//
+// Update particle locations
+//----------------------------------------------------------------------------//
+void OpenGl_updateParticleVelocity(void * velocity, size_t size)
+{
+	glBindBuffer(GL_ARRAY_BUFFER ,particle_VBO);
+	glBufferSubData(GL_ARRAY_BUFFER,size, size,velocity);
+	glBindBuffer(GL_ARRAY_BUFFER,0);
+}
+
+//----------------------------------------------------------------------------//
 // Update voxels locations and flags
 //----------------------------------------------------------------------------//
 void OpenGl_updateVoxels(void * positions,void * flags, int nrOfVoxels_)
@@ -360,7 +370,7 @@ void OpenGl_drawAndUpdate(bool &running)
 	
 		
 	DrawParticles();
-	DrawVoxels();
+	//DrawVoxels();
 
 	
 	modelViewMatrix.PopMatrix();

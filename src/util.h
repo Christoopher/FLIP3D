@@ -27,7 +27,7 @@ template<class T> inline T max(const T &a1, const T &a2, const T &a3)
 }
 
 template<class T> inline T max(const T &a1, const T &a2)
-{ 
+{	
 	if(a1>a2) 
 		return a1; 
 	else 
