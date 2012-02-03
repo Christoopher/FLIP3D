@@ -12,11 +12,13 @@
 #include "hr_time.h"
 #include "Sparse_Matrix.h"
 #include "Fluid_Solver.h"
+#include "Unconditioned_CG_Solver.h"
 
 
 bool running = true;
-const int perCell = 256;
-const int Nparticles = 5*5*5*perCell;
+const int perCell = 8;
+const int box = 5;
+const int Nparticles = box*box*box*perCell;
 const int Nvoxels = 10;
 
 void initVoxels(float * voxelPositions, Array3f & voxelFlags, int k)
@@ -139,14 +141,63 @@ void TestSparse()
 int main(void)
 {
 
-	float * verticies = new float[3*Nparticles];
+	Sparse_Matrix A(3,3,3);
+	VectorN b(3*3*3);
+	VectorN x(3*3*3);
+
+	for(int k = 1; k < 2; ++k)
+	{
+		for(int j = 1; j < 2; ++j)
+		{
+			for(int i = 1; i < 2; ++i)
+			{
+				A(i,j,k,0) = 6;
+				A(i,j,k,1) = -1;
+				A(i,j,k,2) = -1;
+				A(i,j,k,3) = -1;
+			}
+		}
+	}
+
+	for(int k = 0; k < 3; ++k)
+	{
+		for(int j = 0; j < 3; ++j)
+		{
+			for(int i = 0; i < 3; ++i)
+			{
+				std::cout << A(i,j,k,0) << "," ;
+				std::cout << A(i,j,k,1)<< "," ;
+				std::cout << A(i,j,k,2)<< "," ;
+				std::cout << A(i,j,k,3)<< "," ;
+				std::cout << "\n";
+			}
+		}
+	}
+
+	for (int i = 13; i< 14; ++i)
+	{
+		b.data[i] = 1;
+	}
+
+
+	Uncondioned_CG_Solver cg(3*3*3);
+	x.zero();
+	cg.solve(A,b,100,10e-6,x);
+
+	for (int i = 0; i< 3*3*3; ++i)
+	{
+		std::cout << x.data[i] << "\n";
+	}
+
+
+	/*float * verticies = new float[3*Nparticles];
 	float * velocities = new float[3*Nparticles];
 
 	Array3f voxelFlags(Nvoxels,Nvoxels,Nvoxels);
 	float * voxelPositions  = new float[3*Nvoxels*Nvoxels*Nvoxels];
 	initVoxels(voxelPositions,voxelFlags,Nvoxels);
 
-	Fluid_Solver fluid_solver(Nvoxels,Nvoxels,Nvoxels,10e-4f,9.82f,1000,Nparticles);
+	Fluid_Solver fluid_solver(Nvoxels,Nvoxels,Nvoxels,10e-5f,9.82f,1000,Nparticles);
 	
 
 	float h = fluid_solver.grid.h;
@@ -155,7 +206,7 @@ int main(void)
 // 	add_particle(fluid_solver.particles,vec3f(h*9.5f,h*9.5f,0.5f*h), vec3f(0.0f));
 // 	add_particle(fluid_solver.particles,vec3f(h*9.5f,h*9.5f,h*9.5f), vec3f(0.0f));
 
-	fluid_solver.init_box(11,perCell);
+	fluid_solver.init_box(box,perCell);
 
 	OpenGl_initViewer(600, 600);
 	get_position_larray(fluid_solver.particles, verticies);
@@ -165,23 +216,32 @@ int main(void)
 
 
 	while(running) {
+		if(reset)
+			fluid_solver.reset();
+		reset = false;
+		
 		OpenGl_drawAndUpdate(running);
 
-		fluid_solver.step_once();
+		if(step)
+			fluid_solver.step_frame();
+
 
 		get_position_larray(fluid_solver.particles, verticies);
 		OpenGl_updateParticleLocation(verticies, sizeof(float)*3*Nparticles);
 		get_velocity_larray(fluid_solver.particles,velocities);
 		OpenGl_updateParticleVelocity(velocities,sizeof(float)*3*Nparticles);
 		
-		update_voxel_flags(fluid_solver.grid,voxelFlags);
-		OpenGl_updateVoxels(voxelPositions, voxelFlags.data, Nvoxels);
+		if(showgrid)
+		{
+			update_voxel_flags(fluid_solver.grid,voxelFlags);
+			OpenGl_updateVoxels(voxelPositions, voxelFlags.data, Nvoxels);
+		}
 
 	}
 
 	delete [] verticies;
 	delete [] velocities;
-	//delete [] voxelPositions;
+	//delete [] voxelPositions;*/
 
 	return 0;
 }

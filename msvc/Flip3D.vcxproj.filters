@@ -65,6 +65,9 @@
     <ClInclude Include="..\src\Fluid_Solver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\Unconditioned_CG_Solver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\Shaders\particle_VertexShader.glsl">

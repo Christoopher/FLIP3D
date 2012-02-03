@@ -40,6 +40,7 @@ struct Sparse_Matrix
 		return data[i*4 + j*stride_y + k*stride_z + offset];
 	}
 
+
 	void zero()
 	{
 		std::memset(data, 0, size*sizeof(double));
@@ -58,6 +59,11 @@ struct VectorN
 	VectorN(int size) : size(size)
 	{
 		init(size);
+	}
+
+	void copy_to(VectorN & vec) const
+	{
+		std::memcpy(vec.data, data, size*sizeof(double)); 
 	}
 
 	void init(int size_)
@@ -96,7 +102,7 @@ void mtx_mult_vectorN(const Sparse_Matrix & mtx, const VectorN & vec, VectorN & 
 		for(int j = 1; j < mtx.dimy-1; ++j)
 			for (int i = 1; i < mtx.dimx-1; ++i)
 			{
-				offset = i-1 + mtx.dimx*(j + mtx.dimy*k);
+				offset = i-1 + mtx.dimx*(j + mtx.dimy*k); //What row in matrix and/or vector
 				res.data[offset] += mtx(i-1,j,k,1)*vec.data[offset]; //i-1,j,k
 
 				offset += 1;
@@ -111,7 +117,7 @@ void mtx_mult_vectorN(const Sparse_Matrix & mtx, const VectorN & vec, VectorN & 
 				offset += 2*mtx.dimx;
 				res.data[offset] = mtx(i,j,k,2)*vec.data[offset]; //i,j+1,k
 
-				offset = offset = i + mtx.dimx*(j + mtx.dimy*(k-1));
+				offset = i + mtx.dimx*(j + mtx.dimy*(k-1));
 				res.data[offset] += mtx(i,j,k-1,3)*vec.data[offset]; //i,j,k-1
 
 				offset += 2*mtx.dimx*mtx.dimy;
@@ -126,19 +132,71 @@ void vectorN_VectorN_add(const VectorN & lhs, const VectorN & rhs, VectorN & res
 
 }
 
+void vectorN_add(VectorN & lhs, const VectorN & rhs)
+{
+	double * rhsItr = rhs.data;
+	for(double *lhsitr = lhs.data; lhsitr < lhs.data + lhs.size; ++lhsitr)
+	{
+		*lhsitr = *lhsitr + *rhsItr++;
+	}
+}
+
+void vectorN_add_scale(VectorN & lhs, const VectorN & rhs, double scale)
+{
+	double * rhsItr = rhs.data;
+	for(double *lhsitr = lhs.data; lhsitr < lhs.data + lhs.size; ++lhsitr)
+	{
+		*lhsitr = *lhsitr + scale*(*rhsItr++);
+	}
+}
+
+void vectorN_scale_add(VectorN & lhs, const VectorN & rhs, double scale)
+{
+	double * rhsItr = rhs.data;
+	for(double *lhsitr = lhs.data; lhsitr < lhs.data + lhs.size; ++lhsitr)
+	{
+		*lhsitr = *lhsitr * scale + (*rhsItr++);
+	}
+}
+
 void vectorN_VectorN_sub(const VectorN & lhs, const VectorN & rhs, VectorN & res)
 {
-
+	double * resItr = res.data;
+	double * rhsItr = rhs.data;
+	for(double *lhsitr = lhs.data; lhsitr < lhs.data + lhs.size; ++lhsitr)
+	{
+		*resItr++ = *lhsitr - *rhsItr++;
+	}
 }
 
-void vectorN_VectorN_dot(const VectorN & lhs, const VectorN & rhs, VectorN & res)
+void vectorN_sub_scale(VectorN & lhs, const VectorN & rhs, double scale)
 {
-
+	double * rhsItr = rhs.data;
+	for(double *lhsitr = lhs.data; lhsitr < lhs.data + lhs.size; ++lhsitr)
+	{
+		*lhsitr = *lhsitr - scale*(*rhsItr++);
+	}
 }
 
-void vectorN_norm_squared(const VectorN & lhs, const VectorN & rhs, VectorN & res)
+double vectorN_dot(const VectorN & lhs, const VectorN & rhs)
 {
+	double * rhsitr = rhs.data;
+	double sum = 0;
+	for(double *lhsitr = lhs.data; lhsitr < lhs.data + lhs.size; ++lhsitr)
+	{
+		sum += (*lhsitr) * (*rhsitr++);
+	}
+	return sum;
+}
 
+double vectorN_norm2(const VectorN & lhs)
+{
+	double sum = 0;
+	for(double *lhsitr = lhs.data; lhsitr < lhs.data + lhs.size; ++lhsitr)
+	{
+		sum += (*lhsitr) * (*lhsitr);
+	}
+	return sum;
 }
 
 

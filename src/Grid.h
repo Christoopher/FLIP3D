@@ -6,24 +6,30 @@
 #define SOLIDCELL 2
 
 #include "Array3D.h"
+#include "Sparse_Matrix.h"
+#include "Unconditioned_CG_Solver.h"
 
 struct Grid
 {
 	int Nx, Ny,Nz;
-	float h,overh, gravity;
+	float h,overh, gravity, rho;
 
 	Array3f u,v,w,du,dv,dw; //Staggered u,v,w velocities
 	Array3d p; //Pressure
 	Array3c marker; //Voxel classification
+	Sparse_Matrix poisson; // The matrix for pressure stage
+	VectorN rhs; //Right hand side of the poisson equation
+	VectorN x; //Right hand side of the poisson equation
+	Uncondioned_CG_Solver cg;
 
 	Grid() {}
 	
-	Grid(int Nx_, int Ny_, int Nz_, float h_, float gravity_) : Nx(Nx_), Ny(Ny_), Nz(Nz_), h(h_), overh(1.0f/h), gravity(gravity_)
+	Grid(int Nx_, int Ny_, int Nz_, float h_, float gravity_, float rho_) : Nx(Nx_), Ny(Ny_), Nz(Nz_), h(h_), overh(1.0f/h), gravity(gravity_), rho(rho_)
 	{
-		init(Nx_,Ny_,Nz_,h_,gravity_);
+		init(Nx_,Ny_,Nz_,h_,gravity_,rho_);
 	}
 
-	void init(int Nx_, int Ny_, int Nz_, float h_, float gravity_)
+	void init(int Nx_, int Ny_, int Nz_, float h_, float gravity_, float rho)
 	{
 		Nx = Nx_; Ny = Ny_; Nz = Nz_; h = h_; gravity = gravity_;
 		overh = 1.0f/h;
@@ -35,6 +41,10 @@ struct Grid
 		dw.init(Nx_,Ny_,Nz_+1);
 		marker.init(Nx_,Ny_,Nz_);
 		p.init(Nx_,Ny_,Nz_);
+		poisson.init(Nx_,Ny_,Nz_);
+		rhs.init(Nx_*Ny_*Nz_);
+		x.init(Nx_*Ny_*Nz_);
+		cg.init(Nx_*Ny_*Nz_);
 	}
 
 	void bary_x(float x, int &i, float &fx)
@@ -103,35 +113,56 @@ struct Grid
 		
 		//du,dv,dw holds the saved velocites
 		//u, v, w hols the new velocities
-		//Thus the change in velocity in e.g u is: 
-		int i;
-		for(i=0; i<u.size; ++i)
-			du.data[i]=u.data[i]-du.data[i];
-		for(i=0; i<v.size; ++i)
-			dv.data[i]=v.data[i]-dv.data[i];
-		for(i=0; i<w.size; ++i)
-			dw.data[i]=w.data[i]-dw.data[i];
+		//Thus the change in velocity in e.g u is: u - du
+		float *pold,*pnew;
+		for(pnew = u.data, pold = du.data; pnew < u.data + u.size; ++pnew, ++pold)
+			*pold = *pnew - *pold;
+		for(pnew = v.data, pold = dv.data; pnew < v.data + v.size; ++pnew, ++pold)
+			*pold = *pnew - *pold;
+		for(pnew = w.data, pold = dw.data; pnew < w.data + w.size; ++pnew, ++pold)
+			*pold = *pnew - *pold;
+
+// 		int i;
+// 		for(i=0; i<u.size; ++i)
+// 			du.data[i]=u.data[i]-du.data[i];
+// 		for(i=0; i<v.size; ++i)
+// 			dv.data[i]=v.data[i]-dv.data[i];
+// 		for(i=0; i<w.size; ++i)
+// 			dw.data[i]=w.data[i]-dw.data[i];
 	}
 
 	void add_gravity(float dt)
 	{
 		float gdt = gravity*dt;
-
 		for (float * itr = v.data; itr < v.data + v.size; ++itr)
-		{
 			*itr -= gdt;
-		}
 	}
 
-	void apply_boundary_conditions() //As of know we set zero on the boundary "floor"
+	void classify_voxel()
 	{
-		for(int k=0; k<v.nz; ++k)
-			for(int i=0; i < v.nx; ++i)
+		for(int k = 0; k < Nz; ++k)
+			for(int j = 0; j < Ny; ++j)
+				for(int i = 0; i < Nx; ++i)
 				{
-					v(i,0,k) = 0;
+					if( i == 0 || i == Nx - 1 || j == 0 || k == 0 || k == Nz - 1)
+						marker(i,j,k) = SOLIDCELL; // Left/Right Wall
 				}
 	}
+	
+	void apply_boundary_conditions() //As of know we set zero on the boundary "floor"
+	{
+		//Velocities
+		for(int k=0; k<v.nz; ++k)
+			for(int i=0; i < v.nx; ++i)
+				v(i,0,k) = 0;				
 
+		for(int k=0; k<u.nz; ++k)
+			for(int j=0; j < u.ny; ++j)
+				u(0,j,k) = u(u.nx-1,j,k) = 0;
+
+		
+	}
+	
 	float CFL()
 	{
 		float maxu = u.infnorm();
@@ -143,7 +174,144 @@ struct Grid
 		return h/sqrtf(maxvel);
 	}
 
+	void form_poisson(float dt);
+	void calc_divergence();
+	void project(float dt);
+	void solve_pressure(int maxiterations, double tolerance);
+
 };
+
+
+void Grid::solve_pressure(int maxiterations, double tolerance)
+{
+	cg.solve(poisson,rhs,maxiterations,tolerance,x);
+}
+
+//----------------------------------------------------------------------------//
+// Subtracts the pressure gradient from the velocities making the velocity field 
+// divergence free
+//----------------------------------------------------------------------------//
+void Grid::project(float dt)
+{
+	float scale = overh * dt / rho;
+	int offset;
+	float val;
+	for(int k = 0; k < Nz; ++k)
+		for(int j = 0; j < Ny; ++j)
+			for(int i = 0; i < Nx; ++i)
+			{
+				if(marker(i,j,k) == FLUIDCELL)
+				{
+					offset = i + Nx*(j + Ny*k); //Offset into rhs.data array
+					val = scale * float(x.data[offset]);
+
+					u(i,j,k) -= val;
+					u(i+1,j,k) += val;
+
+					v(i,j,k) -= val;
+					v(i,j+1,k) += val;
+
+					w(i,j,k) -= val;
+					w(i,j+1,k) += val;
+
+				}
+				else if(marker(i,j,k) == SOLIDCELL)
+				{
+					u(i,j,k) = 0;
+					u(i+1,j,k) = 0;
+
+					v(i,j,k) = 0;
+					v(i,j+1,k) = 0;
+
+					w(i,j,k) = 0;
+					w(i,j,k+1) = 0;
+				}
+			}
+}
+
+
+//----------------------------------------------------------------------------//
+// Calculates the divergence in the velocity field
+// and fills the the b of the poisson equation
+//----------------------------------------------------------------------------//
+void Grid::calc_divergence()
+{
+	rhs.zero();
+	int offset;
+	float scale = overh;
+	for(int k = 0; k < Nx; ++k)
+		for(int j = 0; j < Ny; ++j)
+			for(int i = 0; i < Nz; ++i)
+			{
+				if(marker(i,j,k) == FLUIDCELL)
+				{
+					offset = i + Nx*(j + Ny*k); //Offset into rhs.data array
+
+					if(marker(i+1,j,k) == SOLIDCELL)		//If cell(i+1,j,k) remove u(i+1/2,j,k)
+						rhs.data[offset] -= u(i,j,k);
+					else if(marker(i-1,j,k) == SOLIDCELL)	//If cell(i-1,j,k) remove u(i-1/2,j,k)
+						rhs.data[offset] += u(i+1,j,k);
+					else
+						rhs.data[offset] += u(i+1,j,k) - u(i,j,k);
+
+					if(marker(i,j+1,k) == SOLIDCELL)		//If cell(i,j+1,k) remove u(i,j+1/2,k)
+						rhs.data[offset] -= v(i,j,k);
+					else if(marker(i,j-1,k) == SOLIDCELL)		//If cell(i,j-1,k) remove u(i,j-1/2,k)
+						rhs.data[offset] += v(i,j+1,k);
+					else
+						rhs.data[offset] += v(i,j+1,k) - v(i,j,k);
+
+					if(marker(i,j,k+1) == SOLIDCELL)		//If cell(i,j,k+1) remove u(i,j,k+1/2)
+						rhs.data[offset] -= w(i,j,k);
+					else if(marker(i,j,k-1) == SOLIDCELL)	//If cell(i,j,k-1) remove u(i,j,k-1/2)
+						rhs.data[offset] += w(i,j,k+1);
+					else
+						rhs.data[offset] += w(i,j,k+1) - w(i,j,k);
+
+					rhs.data[offset] *= -scale;
+				}
+			}
+}
+
+//----------------------------------------------------------------------------//
+// Sets up the coefficients in the matrix of the poisson equation
+//----------------------------------------------------------------------------//
+void Grid::form_poisson(float dt)
+{
+	float scale = overh * overh * dt / rho;
+	for(int k = 1; k < Nz-1; ++k)
+		for(int j = 1; j < Ny-1; ++j)
+			for(int i = 1; i < Nx-1; ++i)
+				if(marker(i,j,k) == FLUIDCELL)
+				{
+					if(marker(i-1,j,k) != SOLIDCELL)		//Cell(i-1,j,k) Is air or fluid
+						poisson(i,j,k,0) += scale; 
+					if(marker(i+1,j,k) != SOLIDCELL)		//Cell(i+1,j,k) Is air or fluid
+					{
+						poisson(i,j,k,0) += scale; 
+						if(marker(i+1,j,k) == FLUIDCELL)	//Cell(i+1,j,k) Is fluid
+							poisson(i,j,k,1) -= scale; 
+					}
+
+					if(marker(i,j-1,k) != SOLIDCELL)		//Cell(i,j-1,k) Is air or fluid
+						poisson(i,j,k,0) += scale; 
+					if(marker(i,j+1,k) != SOLIDCELL)		//Cell(i,j+1,k) Is air or fluid
+					{
+						poisson(i,j,k,0) += scale; 
+						if(marker(i,j+1,k) == FLUIDCELL)	//Cell(i,j+1,k) Is fluid
+							poisson(i,j,k,2) -= scale; 
+					}
+
+					if(marker(i,j,k-1) != SOLIDCELL)		//Cell(i,j,k-1) Is air or fluid
+						poisson(i,j,k,0) += scale; 
+					if(marker(i,j,k+1) != SOLIDCELL)		//Cell(i,j,k+1) Is air or fluid
+					{
+						poisson(i,j,k,0) += scale; 
+						if(marker(i,j+1,k) == FLUIDCELL)	//Cell(i,j,k+1) Is fluid
+							poisson(i,j,k,3) -= scale; 
+					}					
+				} //End if CELL(i,j,k) == FLUIDCELL
+}
 
 
 

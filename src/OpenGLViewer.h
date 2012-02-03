@@ -31,6 +31,8 @@ int nrOfParticles, nrOfVoxels;
 double t0 = 0;
 int frames = 0;
 
+bool step = false, reset = false, showgrid = false;
+
 //----------------------------------------------------------------------------//
 // Shaders
 //----------------------------------------------------------------------------//
@@ -370,7 +372,9 @@ void OpenGl_drawAndUpdate(bool &running)
 	
 		
 	DrawParticles();
-	//DrawVoxels();
+
+	if(showgrid)
+		DrawVoxels();
 
 	
 	modelViewMatrix.PopMatrix();
@@ -386,7 +390,21 @@ void OpenGl_drawAndUpdate(bool &running)
 //----------------------------------------------------------------------------//
 void GLFWCALL KeyboardFunc( int key, int action )
 {
+	if(key == 'S')
+	{
+		if(action == GLFW_PRESS)
+			step = !step;
+	}
 
+	if(key == 'G')
+	{
+		if(action == GLFW_PRESS)
+			showgrid = !showgrid;
+
+	}
+
+	if(key == 'R' && action == GLFW_PRESS)
+		reset = true;
 }
 
 

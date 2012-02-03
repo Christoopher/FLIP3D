@@ -79,7 +79,7 @@ struct Array3{
 
 	void zero()
 	{ 
-		std::memset(data, 0, size*sizeof(T)); 
+		std::memset(data, AIRCELL, size*sizeof(T)); 
 	}
 
 	double dot(const Array3 &a) const

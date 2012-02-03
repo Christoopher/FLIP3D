@@ -108,6 +108,7 @@
     <ClInclude Include="..\src\Sparse_Matrix.h" />
     <ClInclude Include="..\src\SSEVector3.h" />
     <ClInclude Include="..\src\Timing\hr_time.h" />
+    <ClInclude Include="..\src\Unconditioned_CG_Solver.h" />
     <ClInclude Include="..\src\util.h" />
     <ClInclude Include="..\src\Vector3.h" />
   </ItemGroup>

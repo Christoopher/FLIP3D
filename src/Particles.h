@@ -38,10 +38,18 @@ struct Particles
 		delete [] pos;
 	}
 
+	void clear()
+	{
+		std::memset(vel, 0, maxnp*sizeof(vec3f));
+		std::memset(pos, 0, maxnp*sizeof(vec3f));
+		weightsumx.zero();
+		weightsumy.zero();
+		weightsumz.zero();
+		currnp = 0;
+	}
+
 	
 };
-
-
 
 // void write_to_file(const char * filename);
 
@@ -60,48 +68,53 @@ void update_from_grid(Particles & particles, Grid & grid)
 		grid.bary_z(particles.pos[p][2], wk, wfz);
 		grid.bary_z_centre(particles.pos[p][2], k, fz);
 
-		//Flip
-		particles.vel[p] += vec3f(grid.du.trilerp(ui,j,k,ufx,fy,fz), grid.dv.trilerp(i,vj,k,fx,vfy,fz), grid.dw.trilerp(i,j,wk,fx,fy,wfz));
-		
 		//Pic
 		//particles.vel[p] = vec3f(grid.u.trilerp(ui,j,k,ufx,fy,fz), grid.v.trilerp(i,vj,k,fx,vfy,fz), grid.w.trilerp(i,j,wk,fx,fy,wfz)); 
+		//Flip
+		//particles.vel[p] += vec3f(grid.du.trilerp(ui,j,k,ufx,fy,fz), grid.dv.trilerp(i,vj,k,fx,vfy,fz), grid.dw.trilerp(i,j,wk,fx,fy,wfz));
+		
+		//PIC/FLIP
+		float alpha = 0.05;
+		particles.vel[p] =  alpha*vec3f(grid.u.trilerp(ui,j,k,ufx,fy,fz), grid.v.trilerp(i,vj,k,fx,vfy,fz), grid.w.trilerp(i,j,wk,fx,fy,wfz))
+			+ (1.0f - alpha)*(particles.vel[p] + vec3f(grid.du.trilerp(ui,j,k,ufx,fy,fz), grid.dv.trilerp(i,vj,k,fx,vfy,fz), grid.dw.trilerp(i,j,wk,fx,fy,wfz)));
+
 	}
 }
 
-void accumulate(Array3f &accum,Array3f &sum, float vel, int i, int j, int k, float fx, float fy, float fz)
+void accumulate(Array3f &macvel,Array3f &sum, float & pvel, int i, int j, int k, float fx, float fy, float fz)
 {
-	float weight;
+	float weight = 0;
 
 	weight = (1-fx)*(1-fy)*(1-fz);
-	accum(i,j,k) += weight*vel;
+	macvel(i,j,k) += weight*pvel;
 	sum(i,j,k) += weight;
 
 	weight = fx*(1-fy)*(1-fz);
-	accum(i+1,j,k) += weight*vel;
+	macvel(i+1,j,k) += weight*pvel;
 	sum(i+1,j,k) += weight;
 
 	weight = (1-fx)*fy*(1-fz);
-	accum(i,j+1,k) += weight*vel;
+	macvel(i,j+1,k) += weight*pvel;
 	sum(i,j+1,k) += weight;
 
 	weight = fx*fy*(1-fz);
-	accum(i+1,j+1,k) += weight*vel;
+	macvel(i+1,j+1,k) += weight*pvel;
 	sum(i+1,j+1,k) += weight;
 
 	weight = (1-fx)*(1-fy)*fz;
-	accum(i,j,k+1) += weight*vel;
+	macvel(i,j,k+1) += weight*pvel;
 	sum(i,j,k+1) += weight;
 
 	weight = fx*(1-fy)*fz;
-	accum(i+1,j,k+1) += weight*vel;
+	macvel(i+1,j,k+1) += weight*pvel;
 	sum(i+1,j,k+1) += weight;
 
 	weight = (1-fx)*fy*fz;
-	accum(i,j+1,k+1) += weight*vel;
+	macvel(i,j+1,k+1) += weight*pvel;
 	sum(i,j+1,k+1) += weight;
 
 	weight = fx*fy*fz;
-	accum(i+1,j+1,k+1) += weight*vel;
+	macvel(i+1,j+1,k+1) += weight*pvel;
 	sum(i+1,j+1,k+1) += weight;
 
 
@@ -109,55 +122,57 @@ void accumulate(Array3f &accum,Array3f &sum, float vel, int i, int j, int k, flo
 
 void transfer_to_grid(Particles & particles, Grid & grid)
 {
-	int vi, vj, vk,i,j,k;
-	float fx, fy, fz;
+	int ui, vj, wk,i,j,k;
+	float fx, ufx, fy, vfy, fz, wfz;
+	int tmpi,tmpj,tmpk;
 	grid.marker.zero();
 	grid.u.zero();
 	grid.v.zero();
 	grid.w.zero();
+	particles.weightsumx.zero();
+	particles.weightsumy.zero();
+	particles.weightsumz.zero();
+
 	for (int p = 0; p < particles.currnp; ++p) //Loop over all particles
 	{
-		grid.bary_x(particles.pos[p][0],vi,fx);
-		i = vi;
-		grid.bary_y_centre(particles.pos[p][1],vj,fy);
-		grid.bary_z_centre(particles.pos[p][2],vk,fz);
-		accumulate(grid.u,particles.weightsumx,particles.vel[p][0],vi,vj,vk,fx,fy,fz);
+		grid.bary_x(particles.pos[p][0],ui,ufx); tmpi = ui;
+		grid.bary_y_centre(particles.pos[p][1],j,fy);
+		grid.bary_z_centre(particles.pos[p][2],k,fz);
+		accumulate(grid.u,particles.weightsumx,particles.vel[p][0],ui,j,k,ufx,fy,fz);
 		
 
-		grid.bary_x_centre(particles.pos[p][0],vi,fx);
-		grid.bary_y(particles.pos[p][1],vj,fy);
-		j = vj;
-		grid.bary_z_centre(particles.pos[p][2],vk,fz);
-		accumulate(grid.v,particles.weightsumy,particles.vel[p][1],vi,vj,vk,fx,fy,fz);
+		grid.bary_x_centre(particles.pos[p][0],i,fx);
+		grid.bary_y(particles.pos[p][1],vj,vfy); tmpj = vj;
+		grid.bary_z_centre(particles.pos[p][2],k,fz);
+		accumulate(grid.v,particles.weightsumy,particles.vel[p][1],i,vj,k,fx,vfy,fz);
 
 		
-		grid.bary_x_centre(particles.pos[p][0],vi,fx);
-		grid.bary_y_centre(particles.pos[p][1],vj,fy);
-		grid.bary_z(particles.pos[p][2],vk,fz);
-		k = vk;
-		accumulate(grid.w,particles.weightsumz,particles.vel[p][2],vi,vj,vk,fx,fy,fz);
+		grid.bary_x_centre(particles.pos[p][0],i,fx);
+		grid.bary_y_centre(particles.pos[p][1],j,fy);
+		grid.bary_z(particles.pos[p][2],wk,wfz); tmpk = wk;
+		accumulate(grid.w,particles.weightsumz,particles.vel[p][2],i,j,wk,fx,fy,wfz);
 
-		grid.marker(i,j,k) = FLUIDCELL;
+		grid.marker(tmpi,tmpj,tmpk) = FLUIDCELL;
 	}
 	
 	//Scale u velocities with weightsumx
 	for (int i = 0; i < grid.u.size; i++)
 	{
-		if(grid.u.data[i] > 0)
+		if(grid.u.data[i] != 0)
 			grid.u.data[i] /= particles.weightsumx.data[i];
 	}
 
 	//Scale v velocities with weightsumy
 	for (int i = 0; i < grid.v.size; i++)
 	{
-		if(grid.v.data[i] > 0)
+		if(grid.v.data[i] != 0)
 			grid.v.data[i] /= particles.weightsumy.data[i];
 	}
 
 	//Scale w velocities with weightsumz
 	for (int i = 0; i < grid.w.size; i++)
 	{
-		if(grid.w.data[i] > 0)
+		if(grid.w.data[i] != 0)
 			grid.w.data[i] /= particles.weightsumz.data[i];
 	}
 
@@ -172,7 +187,7 @@ void advect_particles(Particles & particles, float dt)
 	vec3f * velItr = particles.vel;
 	for (vec3f * ppos = particles.pos; ppos < particles.pos + particles.currnp; ++ppos )
 	{
-		*ppos += (*velItr++)*dt;
+		*ppos += (*velItr++)*dt; // position_n+1 = position_n + velocity * dt
 	}
 }
 
@@ -192,7 +207,6 @@ inline void add_particle(Particles & particles, vec3f & pos, vec3f  & vel)
 void get_velocity_larray(Particles & particles, float velArray[])
 {
 	float * itr = velArray;
-
 	for (vec3f * pvel = particles.vel; pvel < particles.vel + particles.currnp; ++pvel )
 	{
 		*itr++ = (*pvel)[0];
