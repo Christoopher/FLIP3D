@@ -31,7 +31,7 @@ int nrOfParticles, nrOfVoxels;
 double t0 = 0;
 int frames = 0;
 
-bool step = false, reset = false, showgrid = false;
+bool step = false, reset = false, showgrid = false, play = false;
 
 //----------------------------------------------------------------------------//
 // Shaders
@@ -390,10 +390,10 @@ void OpenGl_drawAndUpdate(bool &running)
 //----------------------------------------------------------------------------//
 void GLFWCALL KeyboardFunc( int key, int action )
 {
-	if(key == 'S')
+	if(key == 'P')
 	{
 		if(action == GLFW_PRESS)
-			step = !step;
+			play = !play;
 	}
 
 	if(key == 'G')
@@ -405,6 +405,11 @@ void GLFWCALL KeyboardFunc( int key, int action )
 
 	if(key == 'R' && action == GLFW_PRESS)
 		reset = true;
+
+	if(key == 'S' && action == GLFW_PRESS)
+		step = true;
+	if(key == 'S' && action == GLFW_RELEASE)
+		step = false;
 }
 
 

@@ -29,10 +29,11 @@ struct Grid
 		init(Nx_,Ny_,Nz_,h_,gravity_,rho_);
 	}
 
-	void init(int Nx_, int Ny_, int Nz_, float h_, float gravity_, float rho)
+	void init(int Nx_, int Ny_, int Nz_, float h_, float gravity_, float rho_)
 	{
 		Nx = Nx_; Ny = Ny_; Nz = Nz_; h = h_; gravity = gravity_;
 		overh = 1.0f/h;
+		rho = rho_;
 		u.init(Nx_+1,Ny_,Nz_);
 		v.init(Nx_,Ny_+1,Nz_);
 		w.init(Nx_,Ny_,Nz_+1);
@@ -42,9 +43,9 @@ struct Grid
 		marker.init(Nx_,Ny_,Nz_);
 		p.init(Nx_,Ny_,Nz_);
 		poisson.init(Nx_,Ny_,Nz_);
-		rhs.init(Nx_*Ny_*Nz_);
-		x.init(Nx_*Ny_*Nz_);
-		cg.init(Nx_*Ny_*Nz_);
+		rhs.init(Nx_,Ny_,Nz_);
+		x.init(Nx_,Ny_,Nz_);
+		cg.init(Nx_,Ny_,Nz_);
 	}
 
 	void bary_x(float x, int &i, float &fx)
@@ -140,25 +141,43 @@ struct Grid
 
 	void classify_voxel()
 	{
-		for(int k = 0; k < Nz; ++k)
-			for(int j = 0; j < Ny; ++j)
-				for(int i = 0; i < Nx; ++i)
-				{
-					if( i == 0 || i == Nx - 1 || j == 0 || k == 0 || k == Nz - 1)
-						marker(i,j,k) = SOLIDCELL; // Left/Right Wall
-				}
+// 		for(int k = 0; k < Nz; ++k)
+// 			for(int j = 0; j < Ny; ++j)
+// 				for(int i = 0; i < Nx; ++i)
+// 				{
+// 					if( i == 0 || i == Nx - 1 || j == 0 || k == 0 || k == Nz - 1)
+// 						marker(i,j,k) = SOLIDCELL;
+// 					//if(j == 0)
+// 				}
+
+		for(int k = 0; k<u.nz; ++k)
+			for(int j = 0; j < u.ny; ++j)
+				marker(0,j,k) = marker(u.nx-1,j,k) = SOLIDCELL; //Left, right wall u component
+
+		for(int k = 0; k<v.nz; ++k)
+			for(int i = 0; i < v.nx; ++i)
+				marker(i,0,k) = SOLIDCELL; //floor v component
+
+		for(int j = 0; j < w.ny; ++j)
+			for(int i = 0; i < w.nx; ++i)
+				marker(i,j,0) = marker(i,j,w.nz-1) = SOLIDCELL; //Front back wall w component
 	}
 	
 	void apply_boundary_conditions() //As of know we set zero on the boundary "floor"
 	{
-		//Velocities
-		for(int k=0; k<v.nz; ++k)
-			for(int i=0; i < v.nx; ++i)
-				v(i,0,k) = 0;				
+		//Project velocities
 
-		for(int k=0; k<u.nz; ++k)
-			for(int j=0; j < u.ny; ++j)
-				u(0,j,k) = u(u.nx-1,j,k) = 0;
+		for(int k = 0; k<u.nz; ++k)
+			for(int j = 0; j < u.ny; ++j)
+				u(0,j,k) = u(1,j,k) = u(u.nx-1,j,k) = u(u.nx-2,j,k) = 0; //Left, right wall u component
+
+		for(int k = 0; k<v.nz; ++k)
+			for(int i = 0; i < v.nx; ++i)
+				v(i,0,k) = v(i,1,k) = 0; //floor v component
+
+		for(int j = 0; j < w.ny; ++j)
+			for(int i = 0; i < w.nx; ++i)
+				w(i,j,0) = w(i,j,1) = w(i,j,w.nz-1) = w(i,j,w.nz-2) = 0; //Front back wall w component
 
 		
 	}
@@ -184,7 +203,9 @@ struct Grid
 
 void Grid::solve_pressure(int maxiterations, double tolerance)
 {
-	cg.solve(poisson,rhs,maxiterations,tolerance,x);
+	//poisson.write_file_to_matlab("test.txt");
+
+	cg.solve(poisson,rhs,maxiterations,tolerance,x,marker);
 }
 
 //----------------------------------------------------------------------------//
@@ -212,7 +233,7 @@ void Grid::project(float dt)
 					v(i,j+1,k) += val;
 
 					w(i,j,k) -= val;
-					w(i,j+1,k) += val;
+					w(i,j,k+1) += val;
 
 				}
 				else if(marker(i,j,k) == SOLIDCELL)
@@ -238,7 +259,7 @@ void Grid::calc_divergence()
 {
 	rhs.zero();
 	int offset;
-	float scale = overh;
+	double scale = overh;
 	for(int k = 0; k < Nx; ++k)
 		for(int j = 0; j < Ny; ++j)
 			for(int i = 0; i < Nz; ++i)
@@ -278,10 +299,12 @@ void Grid::calc_divergence()
 //----------------------------------------------------------------------------//
 void Grid::form_poisson(float dt)
 {
-	float scale = overh * overh * dt / rho;
+	poisson.zero();
+	double scale = overh * overh * dt / rho; // dt / (rho * dx^2) = (1/dx^2) * dt / rho
 	for(int k = 1; k < Nz-1; ++k)
 		for(int j = 1; j < Ny-1; ++j)
 			for(int i = 1; i < Nx-1; ++i)
+			{
 				if(marker(i,j,k) == FLUIDCELL)
 				{
 					if(marker(i-1,j,k) != SOLIDCELL)		//Cell(i-1,j,k) Is air or fluid
@@ -307,10 +330,11 @@ void Grid::form_poisson(float dt)
 					if(marker(i,j,k+1) != SOLIDCELL)		//Cell(i,j,k+1) Is air or fluid
 					{
 						poisson(i,j,k,0) += scale; 
-						if(marker(i,j+1,k) == FLUIDCELL)	//Cell(i,j,k+1) Is fluid
+						if(marker(i,j,k+1) == FLUIDCELL)	//Cell(i,j,k+1) Is fluid
 							poisson(i,j,k,3) -= scale; 
 					}					
 				} //End if CELL(i,j,k) == FLUIDCELL
+			}
 }
 
 

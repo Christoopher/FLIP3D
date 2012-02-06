@@ -74,7 +74,7 @@ void update_from_grid(Particles & particles, Grid & grid)
 		//particles.vel[p] += vec3f(grid.du.trilerp(ui,j,k,ufx,fy,fz), grid.dv.trilerp(i,vj,k,fx,vfy,fz), grid.dw.trilerp(i,j,wk,fx,fy,wfz));
 		
 		//PIC/FLIP
-		float alpha = 0.05;
+		float alpha = 0.05f;
 		particles.vel[p] =  alpha*vec3f(grid.u.trilerp(ui,j,k,ufx,fy,fz), grid.v.trilerp(i,vj,k,fx,vfy,fz), grid.w.trilerp(i,j,wk,fx,fy,wfz))
 			+ (1.0f - alpha)*(particles.vel[p] + vec3f(grid.du.trilerp(ui,j,k,ufx,fy,fz), grid.dv.trilerp(i,vj,k,fx,vfy,fz), grid.dw.trilerp(i,j,wk,fx,fy,wfz)));
 
@@ -124,7 +124,6 @@ void transfer_to_grid(Particles & particles, Grid & grid)
 {
 	int ui, vj, wk,i,j,k;
 	float fx, ufx, fy, vfy, fz, wfz;
-	int tmpi,tmpj,tmpk;
 	grid.marker.zero();
 	grid.u.zero();
 	grid.v.zero();
@@ -135,24 +134,23 @@ void transfer_to_grid(Particles & particles, Grid & grid)
 
 	for (int p = 0; p < particles.currnp; ++p) //Loop over all particles
 	{
-		grid.bary_x(particles.pos[p][0],ui,ufx); tmpi = ui;
+		grid.bary_x(particles.pos[p][0],ui,ufx);
 		grid.bary_y_centre(particles.pos[p][1],j,fy);
 		grid.bary_z_centre(particles.pos[p][2],k,fz);
 		accumulate(grid.u,particles.weightsumx,particles.vel[p][0],ui,j,k,ufx,fy,fz);
 		
 
 		grid.bary_x_centre(particles.pos[p][0],i,fx);
-		grid.bary_y(particles.pos[p][1],vj,vfy); tmpj = vj;
+		grid.bary_y(particles.pos[p][1],vj,vfy);
 		grid.bary_z_centre(particles.pos[p][2],k,fz);
 		accumulate(grid.v,particles.weightsumy,particles.vel[p][1],i,vj,k,fx,vfy,fz);
 
 		
 		grid.bary_x_centre(particles.pos[p][0],i,fx);
 		grid.bary_y_centre(particles.pos[p][1],j,fy);
-		grid.bary_z(particles.pos[p][2],wk,wfz); tmpk = wk;
+		grid.bary_z(particles.pos[p][2],wk,wfz);
 		accumulate(grid.w,particles.weightsumz,particles.vel[p][2],i,j,wk,fx,fy,wfz);
 
-		grid.marker(tmpi,tmpj,tmpk) = FLUIDCELL;
 	}
 	
 	//Scale u velocities with weightsumx
@@ -176,6 +174,13 @@ void transfer_to_grid(Particles & particles, Grid & grid)
 			grid.w.data[i] /= particles.weightsumz.data[i];
 	}
 
+	for (int p = 0; p < particles.currnp; ++p)
+	{
+		grid.bary_x(particles.pos[p][0],i,fx);
+		grid.bary_x(particles.pos[p][1],j,fy);
+		grid.bary_x(particles.pos[p][2],k,fz);
+		grid.marker(i,j,k) = FLUIDCELL;
+	}
 	
 }
 

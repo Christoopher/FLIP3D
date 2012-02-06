@@ -73,16 +73,14 @@ void update_voxel_flags(Grid & grid, Array3f & flags)
 {
 	for(int i = 0; i < grid.marker.size; ++i)
 	{
-		flags.data[i] = grid.marker.data[i] == FLUIDCELL ? 1.0f : 0.0f;
+		if(grid.marker.data[i] == FLUIDCELL)
+			flags.data[i] = FLUIDCELL;
+		else
+			flags.data[i] = 0;
 	}
 }
 
-//----------------------------------------------------------------------------//
-// Iterates fluid solver on timestep
-//----------------------------------------------------------------------------//
-
-
-void TestSparse() 
+/*void TestSparse() 
 {
 	int dim = 4;
 	Sparse_Matrix mtx(dim,dim,dim);
@@ -124,7 +122,7 @@ void TestSparse()
 		vec.data[i] = 1;
 	}
 
-	mtx_mult_vectorN(mtx,vec,res);
+	mtx_mult_vectorN(mtx,vec,res,marker);
 
 	row = 0;
 	for(int i = 0; i<dim*dim*dim; ++i)
@@ -132,7 +130,7 @@ void TestSparse()
 		std::cout << row << ": " << res.data[i] << "\n";
 		row++;
 	}
-}
+}*/
 
 
 
@@ -141,15 +139,15 @@ void TestSparse()
 int main(void)
 {
 
-	Sparse_Matrix A(3,3,3);
+	/*Sparse_Matrix A(3,3,3);
 	VectorN b(3*3*3);
 	VectorN x(3*3*3);
 
-	for(int k = 1; k < 2; ++k)
+	for(int k = 0; k < 3; ++k)
 	{
-		for(int j = 1; j < 2; ++j)
+		for(int j = 0; j < 3; ++j)
 		{
-			for(int i = 1; i < 2; ++i)
+			for(int i = 0; i < 3; ++i)
 			{
 				A(i,j,k,0) = 6;
 				A(i,j,k,1) = -1;
@@ -158,6 +156,8 @@ int main(void)
 			}
 		}
 	}
+
+	A.write_file_to_matlab("hej");
 
 	for(int k = 0; k < 3; ++k)
 	{
@@ -188,20 +188,21 @@ int main(void)
 	{
 		std::cout << x.data[i] << "\n";
 	}
+*/
 
 
-	/*float * verticies = new float[3*Nparticles];
+	float * verticies = new float[3*Nparticles];
 	float * velocities = new float[3*Nparticles];
 
 	Array3f voxelFlags(Nvoxels,Nvoxels,Nvoxels);
 	float * voxelPositions  = new float[3*Nvoxels*Nvoxels*Nvoxels];
 	initVoxels(voxelPositions,voxelFlags,Nvoxels);
 
-	Fluid_Solver fluid_solver(Nvoxels,Nvoxels,Nvoxels,10e-5f,9.82f,1000,Nparticles);
+	Fluid_Solver fluid_solver(Nvoxels,Nvoxels,Nvoxels,10e-5f,9.82f,1,Nparticles);
 	
 
 	float h = fluid_solver.grid.h;
-// 	add_particle(fluid_solver.particles,vec3f(0.5f*h,h*9.5f,0.5f*h), vec3f(0.0f));
+// 	add_particle(fluid_solver.particles,vec3f(0.5f*h,h*9.5f,0.5f*h), vec3f(0.0f));	
 // 	add_particle(fluid_solver.particles,vec3f(0.5f*h,h*9.5f,h*9.5f), vec3f(0.0f));
 // 	add_particle(fluid_solver.particles,vec3f(h*9.5f,h*9.5f,0.5f*h), vec3f(0.0f));
 // 	add_particle(fluid_solver.particles,vec3f(h*9.5f,h*9.5f,h*9.5f), vec3f(0.0f));
@@ -222,9 +223,8 @@ int main(void)
 		
 		OpenGl_drawAndUpdate(running);
 
-		if(step)
+		if(step || play)
 			fluid_solver.step_frame();
-
 
 		get_position_larray(fluid_solver.particles, verticies);
 		OpenGl_updateParticleLocation(verticies, sizeof(float)*3*Nparticles);
@@ -233,6 +233,7 @@ int main(void)
 		
 		if(showgrid)
 		{
+			fluid_solver.grid.classify_voxel();
 			update_voxel_flags(fluid_solver.grid,voxelFlags);
 			OpenGl_updateVoxels(voxelPositions, voxelFlags.data, Nvoxels);
 		}
@@ -241,7 +242,7 @@ int main(void)
 
 	delete [] verticies;
 	delete [] velocities;
-	//delete [] voxelPositions;*/
+	delete [] voxelPositions;
 
 	return 0;
 }
