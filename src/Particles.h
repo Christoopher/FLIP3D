@@ -124,6 +124,7 @@ void transfer_to_grid(Particles & particles, Grid & grid)
 {
 	int ui, vj, wk,i,j,k;
 	float fx, ufx, fy, vfy, fz, wfz;
+
 	grid.marker.zero();
 	grid.u.zero();
 	grid.v.zero();
@@ -177,8 +178,8 @@ void transfer_to_grid(Particles & particles, Grid & grid)
 	for (int p = 0; p < particles.currnp; ++p)
 	{
 		grid.bary_x(particles.pos[p][0],i,fx);
-		grid.bary_x(particles.pos[p][1],j,fy);
-		grid.bary_x(particles.pos[p][2],k,fz);
+		grid.bary_y(particles.pos[p][1],j,fy);
+		grid.bary_z(particles.pos[p][2],k,fz);
 		grid.marker(i,j,k) = FLUIDCELL;
 	}
 	

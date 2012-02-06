@@ -198,7 +198,7 @@ int main(void)
 	float * voxelPositions  = new float[3*Nvoxels*Nvoxels*Nvoxels];
 	initVoxels(voxelPositions,voxelFlags,Nvoxels);
 
-	Fluid_Solver fluid_solver(Nvoxels,Nvoxels,Nvoxels,10e-5f,9.82f,1,Nparticles);
+	Fluid_Solver fluid_solver(Nvoxels,Nvoxels,Nvoxels,10e-5f,9.82f,1000,Nparticles);
 	
 
 	float h = fluid_solver.grid.h;

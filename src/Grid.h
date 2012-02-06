@@ -15,7 +15,6 @@ struct Grid
 	float h,overh, gravity, rho;
 
 	Array3f u,v,w,du,dv,dw; //Staggered u,v,w velocities
-	Array3d p; //Pressure
 	Array3c marker; //Voxel classification
 	Sparse_Matrix poisson; // The matrix for pressure stage
 	VectorN rhs; //Right hand side of the poisson equation
@@ -41,11 +40,24 @@ struct Grid
 		dv.init(Nx_,Ny_+1,Nz_);
 		dw.init(Nx_,Ny_,Nz_+1);
 		marker.init(Nx_,Ny_,Nz_);
-		p.init(Nx_,Ny_,Nz_);
 		poisson.init(Nx_,Ny_,Nz_);
 		rhs.init(Nx_,Ny_,Nz_);
 		x.init(Nx_,Ny_,Nz_);
 		cg.init(Nx_,Ny_,Nz_);
+	}
+
+	void zero()
+	{
+		u.zero();
+		v.zero();
+		w.zero();
+		du.zero();
+		dv.zero();
+		dw.zero();
+		poisson.zero();
+		rhs.zero();
+		x.zero();
+		marker.zero();
 	}
 
 	void bary_x(float x, int &i, float &fx)
@@ -62,8 +74,8 @@ struct Grid
 		if(i<0){ 
 			i=0; fx=0.0; 
 		}
-		else if(i>p.nx-2) { 	//Why?
-			i=p.nx-2; fx=1.0; 
+		else if(i>Nx-2) { 	//Why?
+			i=Nx-2; fx=1.0; 
 		}
 		else{ 
 			fx=sx-floor(sx); 
@@ -82,7 +94,7 @@ struct Grid
 		float sy=y*overh-0.5f;
 		j=(int)sy;
 		if(j<0){ j=0; fy=0.0; }
-		else if(j>p.ny-2){ j=p.ny-2; fy=1.0; }
+		else if(j>Ny-2){ j=Ny-2; fy=1.0; }
 		else{ fy=sy-floor(sy); }
 	}
 
@@ -98,7 +110,7 @@ struct Grid
 		float sz=z*overh-0.5f;
 		k=(int)sz;
 		if(k<0){ k=0; fz=0.0; }
-		else if(k>p.nz-2){ k=p.nz-2; fz=1.0; }
+		else if(k>Nz-2){ k=Nz-2; fz=1.0; }
 		else{ fz=sz-floor(sz); }
 	}
 
@@ -111,25 +123,27 @@ struct Grid
 
 	void get_velocity_update()
 	{
-		
+		du.zero();
+		dv.zero();
+		dw.zero();
 		//du,dv,dw holds the saved velocites
 		//u, v, w hols the new velocities
 		//Thus the change in velocity in e.g u is: u - du
-		float *pold,*pnew;
-		for(pnew = u.data, pold = du.data; pnew < u.data + u.size; ++pnew, ++pold)
-			*pold = *pnew - *pold;
-		for(pnew = v.data, pold = dv.data; pnew < v.data + v.size; ++pnew, ++pold)
-			*pold = *pnew - *pold;
-		for(pnew = w.data, pold = dw.data; pnew < w.data + w.size; ++pnew, ++pold)
-			*pold = *pnew - *pold;
+// 		float *pold,*pnew;
+// 		for(pnew = u.data, pold = du.data; pnew < u.data + u.size; ++pnew, ++pold)
+// 			*pold = *pnew - *pold;
+// 		for(pnew = v.data, pold = dv.data; pnew < v.data + v.size; ++pnew, ++pold)
+// 			*pold = *pnew - *pold;
+// 		for(pnew = w.data, pold = dw.data; pnew < w.data + w.size; ++pnew, ++pold)
+// 			*pold = *pnew - *pold;
 
-// 		int i;
-// 		for(i=0; i<u.size; ++i)
-// 			du.data[i]=u.data[i]-du.data[i];
-// 		for(i=0; i<v.size; ++i)
-// 			dv.data[i]=v.data[i]-dv.data[i];
-// 		for(i=0; i<w.size; ++i)
-// 			dw.data[i]=w.data[i]-dw.data[i];
+		int i;
+		for(i=0; i<u.size; ++i)
+			du.data[i]=u.data[i]-du.data[i];
+		for(i=0; i<v.size; ++i)
+			dv.data[i]=v.data[i]-dv.data[i];
+		for(i=0; i<w.size; ++i)
+			dw.data[i]=w.data[i]-dw.data[i];
 	}
 
 	void add_gravity(float dt)
@@ -150,17 +164,17 @@ struct Grid
 // 					//if(j == 0)
 // 				}
 
-		for(int k = 0; k<u.nz; ++k)
-			for(int j = 0; j < u.ny; ++j)
-				marker(0,j,k) = marker(u.nx-1,j,k) = SOLIDCELL; //Left, right wall u component
+		for(int k = 0; k < Nz; ++k)
+			for(int j = 0; j < Ny; ++j)
+				marker(0,j,k) = marker(Nx-1,j,k) = SOLIDCELL; //Left, right cells
 
-		for(int k = 0; k<v.nz; ++k)
-			for(int i = 0; i < v.nx; ++i)
-				marker(i,0,k) = SOLIDCELL; //floor v component
+		for(int k = 0; k < Nz; ++k)
+			for(int i = 0; i < Nx; ++i)
+				marker(i,0,k) = SOLIDCELL; //floor cells
 
-		for(int j = 0; j < w.ny; ++j)
-			for(int i = 0; i < w.nx; ++i)
-				marker(i,j,0) = marker(i,j,w.nz-1) = SOLIDCELL; //Front back wall w component
+		for(int j = 0; j < Ny; ++j)
+			for(int i = 0; i < Nx; ++i)
+				marker(i,j,0) = marker(i,j,Nz-1) = SOLIDCELL; //Front back wall cells
 	}
 	
 	void apply_boundary_conditions() //As of know we set zero on the boundary "floor"

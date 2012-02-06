@@ -52,9 +52,9 @@ void Fluid_Solver::init_box(int dim, int particles_per_cell)
 
 	srand ( time(NULL) );
 	float r1,r2,r3;
-	for(float k = halfz-hdim; k < halfz + hdim; ++k)
-		for(float j = dimz-d-1; j < dimy-1; ++j)
-			for(float i = halfx-hdim; i < halfx+hdim; ++i)
+	for(float k = 3; k < 8; ++k)
+		for(float j = 4; j < 9; ++j)
+			for(float i = 3; i < 8; ++i)
 			{
 				for (int p = 0; p < pcel; ++p)
 				{
@@ -85,6 +85,7 @@ void Fluid_Solver::step_frame()
 
 void Fluid_Solver::step(float dt)
 {
+	grid.zero();
 
 	transfer_to_grid(particles,grid);
 
@@ -92,16 +93,17 @@ void Fluid_Solver::step(float dt)
 	grid.add_gravity(dt);
 	grid.apply_boundary_conditions();
 	grid.classify_voxel();
-	grid.form_poisson(dt);
-	grid.calc_divergence();
-	grid.solve_pressure(100,10e-8);
-	grid.project(dt);
+	//grid.form_poisson(dt);
+	//grid.calc_divergence();
+	//grid.solve_pressure(100,10e-8);
+	//grid.project(dt);
 	grid.apply_boundary_conditions();
 	grid.get_velocity_update();
 	update_from_grid(particles,grid);
 
-	for (int i = 0; i < 5; i++)
-		advect_particles(particles,0.2*dt);
+	//for (int i = 0; i < 5; i++)
+	advect_particles(particles,dt);
+	
 }
 
 
