@@ -89,15 +89,16 @@ void Fluid_Solver::step(float dt)
 	grid.apply_boundary_conditions();
 	grid.classify_voxel();
 	grid.form_poisson(dt); //Funkar med hög sannolikhet
-	grid.calc_divergence();
+	//grid.calc_divergence();
 	grid.solve_pressure(100,1e-6);
-	grid.project(dt);
+	//grid.project(dt);
 	grid.apply_boundary_conditions();
 	grid.get_velocity_update();
 	update_from_grid(particles,grid);
 
-	for (int i = 0; i < 5; i++)
-		advect_particles(particles,0.2*dt);
+	//for (int i = 0; i < 5; i++)
+	advect_particles(particles,dt);
+	
 }
 
 
