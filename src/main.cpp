@@ -19,7 +19,7 @@ bool running = true;
 const int perCell = 8;
 const int box = 5;
 const int Nparticles = box*box*box*perCell;
-const int Nvoxels = 10;
+const int Nvoxels = 11;
 
 void initVoxels(float * voxelPositions, Array3f & voxelFlags, int k)
 {
@@ -73,10 +73,13 @@ void update_voxel_flags(Grid & grid, Array3f & flags)
 {
 	for(int i = 0; i < grid.marker.size; ++i)
 	{
-		if(grid.marker.data[i] == FLUIDCELL)
-			flags.data[i] = FLUIDCELL;
-		else
-			flags.data[i] = 0;
+
+		flags.data[i] = grid.marker.data[i];
+
+		//if(grid.marker.data[i] == FLUIDCELL)
+		//	flags.data[i] = FLUIDCELL;
+		//else
+		//	flags.data[i] = 0;
 	}
 }
 
@@ -139,58 +142,6 @@ void update_voxel_flags(Grid & grid, Array3f & flags)
 int main(void)
 {
 
-	/*Sparse_Matrix A(3,3,3);
-	VectorN b(3*3*3);
-	VectorN x(3*3*3);
-
-	for(int k = 0; k < 3; ++k)
-	{
-		for(int j = 0; j < 3; ++j)
-		{
-			for(int i = 0; i < 3; ++i)
-			{
-				A(i,j,k,0) = 6;
-				A(i,j,k,1) = -1;
-				A(i,j,k,2) = -1;
-				A(i,j,k,3) = -1;
-			}
-		}
-	}
-
-	A.write_file_to_matlab("hej");
-
-	for(int k = 0; k < 3; ++k)
-	{
-		for(int j = 0; j < 3; ++j)
-		{
-			for(int i = 0; i < 3; ++i)
-			{
-				std::cout << A(i,j,k,0) << "," ;
-				std::cout << A(i,j,k,1)<< "," ;
-				std::cout << A(i,j,k,2)<< "," ;
-				std::cout << A(i,j,k,3)<< "," ;
-				std::cout << "\n";
-			}
-		}
-	}
-
-	for (int i = 13; i< 14; ++i)
-	{
-		b.data[i] = 1;
-	}
-
-
-	Uncondioned_CG_Solver cg(3*3*3);
-	x.zero();
-	cg.solve(A,b,100,10e-6,x);
-
-	for (int i = 0; i< 3*3*3; ++i)
-	{
-		std::cout << x.data[i] << "\n";
-	}
-*/
-
-
 	float * verticies = new float[3*Nparticles];
 	float * velocities = new float[3*Nparticles];
 
@@ -198,7 +149,7 @@ int main(void)
 	float * voxelPositions  = new float[3*Nvoxels*Nvoxels*Nvoxels];
 	initVoxels(voxelPositions,voxelFlags,Nvoxels);
 
-	Fluid_Solver fluid_solver(Nvoxels,Nvoxels,Nvoxels,10e-5f,9.82f,1,Nparticles);
+	Fluid_Solver fluid_solver(Nvoxels,Nvoxels,Nvoxels,1.0/10,9.82f,1,Nparticles);
 	
 
 	float h = fluid_solver.grid.h;
@@ -207,7 +158,7 @@ int main(void)
 // 	add_particle(fluid_solver.particles,vec3f(h*9.5f,h*9.5f,0.5f*h), vec3f(0.0f));
 // 	add_particle(fluid_solver.particles,vec3f(h*9.5f,h*9.5f,h*9.5f), vec3f(0.0f));
 
-	fluid_solver.init_box(box,perCell);
+	fluid_solver.init_box();
 
 	OpenGl_initViewer(600, 600);
 	get_position_larray(fluid_solver.particles, verticies);

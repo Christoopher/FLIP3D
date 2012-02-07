@@ -30,7 +30,7 @@ struct Fluid_Solver
 	void step_frame();
 	void step(float dt);
 
-	void init_box(int dim = 1, int particles_per_cell = 1);
+	void init_box();
 
 };
 
@@ -41,28 +41,21 @@ void Fluid_Solver::reset()
 
 }
 
-void Fluid_Solver::init_box(int dim, int particles_per_cell)
+void Fluid_Solver::init_box()
 {
-	const static int pcel = particles_per_cell;
-	const static int d = dim;
-	int halfz = dimz / 2;
-	int halfx = dimx / 2;
-	float hdim = d/2.0f;
-	
-
 	srand ( time(NULL) );
 	float r1,r2,r3;
-	for(float k = halfz-hdim; k < halfz + hdim; ++k)
-		for(float j = dimz-d-1; j < dimy-1; ++j)
-			for(float i = halfx-hdim; i < halfx+hdim; ++i)
+	for(float k = 3; k < 8; ++k)
+		for(float j = 5; j < 10; ++j)
+			for(float i = 3; i < 8; ++i)
 			{
-				for (int p = 0; p < pcel; ++p)
+				for (int p = 0; p < 8; ++p)
 				{
-					r1 = 0.99f*(float(rand()) / RAND_MAX - 0.5);
+					r1 = 0.99f*(float(rand()) / RAND_MAX - 0.5);  // [-0.499999, 0.49999999]
 					r2 = 0.99f*(float(rand()) / RAND_MAX - 0.5);
 					r3 = 0.99f*(float(rand()) / RAND_MAX - 0.5);
 					
-					add_particle(particles,vec3f(i+r1,j+r2,k+r3)*grid.h,vec3f(0.0f));
+					add_particle(particles,vec3f(i+r1 + 0.5f,j+r2 + 0.5f,k+r3 + 0.5f)*grid.h,vec3f(0.0f));
 				}
 
 			}
@@ -70,6 +63,7 @@ void Fluid_Solver::init_box(int dim, int particles_per_cell)
 
 void Fluid_Solver::step_frame()
 {
+	static int frame = 0;
 	for(float elapsed = 0; elapsed < timestep;)
 	{
 
@@ -81,10 +75,12 @@ void Fluid_Solver::step_frame()
 
 		step(dt);
 	}
+	frame++;
 }
 
 void Fluid_Solver::step(float dt)
 {
+	grid.zero();
 
 	transfer_to_grid(particles,grid);
 
@@ -92,9 +88,9 @@ void Fluid_Solver::step(float dt)
 	grid.add_gravity(dt);
 	grid.apply_boundary_conditions();
 	grid.classify_voxel();
-	grid.form_poisson(dt);
+	grid.form_poisson(dt); //Funkar med hög sannolikhet
 	grid.calc_divergence();
-	grid.solve_pressure(100,10e-8);
+	grid.solve_pressure(100,1e-6);
 	grid.project(dt);
 	grid.apply_boundary_conditions();
 	grid.get_velocity_update();

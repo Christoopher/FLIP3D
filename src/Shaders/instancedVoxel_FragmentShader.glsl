@@ -6,9 +6,20 @@ in float isFLuid0;
 
 void main(void)
 {
-	//if(isFLuid0 > 1)
-	//	fragColor.rgb = vec3(1.0f,0.0f,0.0f);
-	//else
-	fragColor.rgb = mix(vec3(1.0),vec3(0.4f,0.4f,1.0), isFLuid0);
-	fragColor.a = 1.0;
+	if(isFLuid0 < 0.5f) // AIR
+	{
+		fragColor.rgb = vec3(1.0f);
+		fragColor.a = 0.0f;
+	}
+	else if(isFLuid0 < 1.5f && isFLuid0 > 0.5f) // FLUID == 1.0
+	{
+		fragColor.rgb = vec3(0.25f,0.25f,1.0f);
+		fragColor.a = 1.0f;
+	}
+	else //SOLID
+	{
+		fragColor.a = 1.0f;
+		fragColor.rgb = vec3(0.5f,0.25f,0.25f);
+	}
+
 }

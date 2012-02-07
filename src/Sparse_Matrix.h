@@ -28,6 +28,15 @@ struct VectorN
 		zero();
 	}
 
+	double infnorm() const
+	{ 
+		double r=0;
+		for(int i=0; i<size; ++i)
+			if( !(std::fabs(data[i]) <= r) ) 
+				r=std::fabs(data[i]);
+		return r;
+	}
+
 	void copy_to(VectorN & vec) const
 	{
 		std::memcpy(vec.data, data, size*sizeof(double)); 
@@ -123,7 +132,7 @@ void VectorN::write_file_to_matlab(std::string filename, Array3c & marker)
 			for(int i = 0; i < dimx; ++i)
 				if(marker(i,j,k) == FLUIDCELL)
 					file << (*this)(i,j,k) << ",";
-	
+
 	file.close();
 }
 
@@ -158,15 +167,15 @@ void write_system_to_matlab(const Sparse_Matrix & A,const VectorN & vec, Array3c
 				plusj << A(i,j,k,2) << ",";
 				plusk << A(i,j,k,3) << ",";
 				b << vec(i,j,k) << ",";
-// 				}
-// 				else
-// 				{
-// 					diag << A(i,j,k,0);
-// 					plusi << A(i,j,k,1);
-// 					plusj << A(i,j,k,2);
-// 					plusk << A(i,j,k,3);
-// 					b << vec(i,j,k);
-// 				}
+				// 				}
+				// 				else
+				// 				{
+				// 					diag << A(i,j,k,0);
+				// 					plusi << A(i,j,k,1);
+				// 					plusj << A(i,j,k,2);
+				// 					plusk << A(i,j,k,3);
+				// 					b << vec(i,j,k);
+				// 				}
 				++itr;
 			}
 		}
@@ -179,40 +188,32 @@ void write_system_to_matlab(const Sparse_Matrix & A,const VectorN & vec, Array3c
 }
 
 
-void mtx_mult_vectorN(const Sparse_Matrix & mtx, const VectorN & vec, VectorN & res, Array3c &marker)
+void mtx_mult_vectorN(const Sparse_Matrix & A, const VectorN & d, VectorN & Adj, Array3c &marker)
 {
-
+	Adj.zero();
 	//All boundary cells are SOLIDS
 	//Thus the boundary cell rows in the Poisson matrix are ZERO: No need to operate on them
-	res.zero();
 	int offset;
-	for(int k=1; k<mtx.dimz-1; ++k)
-		for(int j = 1; j < mtx.dimy-1; ++j)
-			for (int i = 1; i < mtx.dimx-1; ++i)
+	int Adj_Offset = 0;
+	for(int k=1; k<A.dimz-1; ++k)
+		for(int j = 1; j < A.dimy-1; ++j)
+			for (int i = 1; i < A.dimx-1; ++i)
 			{
-				if(marker(i,j,k) != FLUIDCELL)
-					continue;
+				if(marker(i,j,k) == FLUIDCELL)
+				{
 
-				offset = i-1 + mtx.dimx*(j + mtx.dimy*k); //What row in matrix and/or vector
-				res.data[offset] += mtx(i-1,j,k,1)*vec.data[offset]; //i-1,j,k
+					//No need to zero Adj since we assign the value on the first entry!
+					Adj(i,j,k) += A(i-1,j,k,1)*d(i-1,j,k); //i-1,j,k
 
-				offset += 1;
-				res.data[offset] += mtx(i,j,k,0)*vec.data[offset]; //i,j,k
+					Adj(i,j,k) += A(i,j,k,0)*d(i,j,k); //i,j,k
+					Adj(i,j,k) += A(i,j,k,1)*d(i+1,j,k); //i+1,j,k
 
-				offset += 1;
-				res.data[offset] += mtx(i,j,k,1)*vec.data[offset]; //i+1,j,k
+					Adj(i,j,k) += A(i,j-1,k,2)*d(i,j-1,k); //i,j-1,k
+					Adj(i,j,k) += A(i,j,k,2)*d(i,j+1,k); //i,j+1,k
 
-				offset = i + mtx.dimx*(j-1 + mtx.dimy*k);
-				res.data[offset] += mtx(i,j-1,k,2)*vec.data[offset]; //i,j-1,k
-
-				offset += 2*mtx.dimx;
-				res.data[offset] = mtx(i,j,k,2)*vec.data[offset]; //i,j+1,k
-
-				offset = i + mtx.dimx*(j + mtx.dimy*(k-1));
-				res.data[offset] += mtx(i,j,k-1,3)*vec.data[offset]; //i,j,k-1
-
-				offset += 2*mtx.dimx*mtx.dimy;
-				res.data[offset] += mtx(i,j,k,3)*vec.data[offset]; //i,j,k+1
+					Adj(i,j,k) += A(i,j,k-1,3)*d(i,j,k-1); //i,j,k-1
+					Adj(i,j,k) += A(i,j,k,3)*d(i,j,k+1); //i,j,k+1
+				}
 
 			}
 
@@ -237,16 +238,16 @@ void vectorN_add_scale(VectorN & lhs, const VectorN & rhs, double scale)
 	double * rhsItr = rhs.data;
 	for(double *lhsitr = lhs.data; lhsitr < lhs.data + lhs.size; ++lhsitr)
 	{
-		*lhsitr = *lhsitr + scale*(*rhsItr++);
+		*lhsitr += scale*(*rhsItr++);
 	}
 }
 
-void vectorN_scale_add(VectorN & lhs, const VectorN & rhs, double scale)
+void vectorN_scale_add(VectorN & d, const VectorN & r, double beta)
 {
-	double * rhsItr = rhs.data;
-	for(double *lhsitr = lhs.data; lhsitr < lhs.data + lhs.size; ++lhsitr)
+	double * r_itr = r.data;
+	for(double *d_itr = d.data; d_itr < d.data + d.size; ++d_itr)
 	{
-		*lhsitr = (*lhsitr) * scale + (*rhsItr++);
+		*d_itr = (*r_itr++) + beta * (*d_itr);
 	}
 }
 
@@ -260,19 +261,19 @@ void vectorN_VectorN_sub(const VectorN & lhs, const VectorN & rhs, VectorN & res
 	}
 }
 
-void vectorN_sub_scale(VectorN & lhs, const VectorN & rhs, double scale)
+void vectorN_sub_scale(VectorN & r, const VectorN & Adj, double alpha)
 {
-	double * rhsItr = rhs.data;
-	for(double *lhsitr = lhs.data; lhsitr < lhs.data + lhs.size; ++lhsitr)
+	double * Adj_itr = Adj.data;
+	for(double *r_itr = r.data; r_itr < r.data + r.size; ++r_itr)
 	{
-		*lhsitr = *lhsitr - scale*(*rhsItr++);
+		*r_itr -= alpha*(*Adj_itr++);
 	}
 }
 
 double vectorN_dot(const VectorN & lhs, const VectorN & rhs)
 {
 	double * rhsitr = rhs.data;
-	double sum = 0;
+	double sum = 0.0;
 	for(double *lhsitr = lhs.data; lhsitr < lhs.data + lhs.size; ++lhsitr)
 	{
 		sum += (*lhsitr) * (*rhsitr++);

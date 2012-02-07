@@ -15,11 +15,10 @@ struct Grid
 	float h,overh, gravity, rho;
 
 	Array3f u,v,w,du,dv,dw; //Staggered u,v,w velocities
-	Array3d p; //Pressure
-	Array3c marker; //Voxel classification
+		Array3c marker; //Voxel classification
 	Sparse_Matrix poisson; // The matrix for pressure stage
 	VectorN rhs; //Right hand side of the poisson equation
-	VectorN x; //Right hand side of the poisson equation
+	VectorN pressure; //Right hand side of the poisson equation
 	Uncondioned_CG_Solver cg;
 
 	Grid() {}
@@ -41,11 +40,24 @@ struct Grid
 		dv.init(Nx_,Ny_+1,Nz_);
 		dw.init(Nx_,Ny_,Nz_+1);
 		marker.init(Nx_,Ny_,Nz_);
-		p.init(Nx_,Ny_,Nz_);
 		poisson.init(Nx_,Ny_,Nz_);
 		rhs.init(Nx_,Ny_,Nz_);
-		x.init(Nx_,Ny_,Nz_);
+		pressure.init(Nx_,Ny_,Nz_);
 		cg.init(Nx_,Ny_,Nz_);
+	}
+
+	void zero()
+	{
+		u.zero();
+		v.zero();
+		w.zero();
+		du.zero();
+		dv.zero();
+		dw.zero();
+		poisson.zero();
+		rhs.zero();
+		pressure.zero();
+		marker.zero();
 	}
 
 	void bary_x(float x, int &i, float &fx)
@@ -62,8 +74,8 @@ struct Grid
 		if(i<0){ 
 			i=0; fx=0.0; 
 		}
-		else if(i>p.nx-2) { 	//Why?
-			i=p.nx-2; fx=1.0; 
+		else if(i>Nx-2) { 	//Why?
+			i=Nx-2; fx=1.0; 
 		}
 		else{ 
 			fx=sx-floor(sx); 
@@ -81,9 +93,18 @@ struct Grid
 	{
 		float sy=y*overh-0.5f;
 		j=(int)sy;
-		if(j<0){ j=0; fy=0.0; }
-		else if(j>p.ny-2){ j=p.ny-2; fy=1.0; }
-		else{ fy=sy-floor(sy); }
+		if(j<0)
+		{ 
+			j=0; fy=0.0; 
+		}
+		else if(j>Ny-2)
+		{ 
+			j=Ny-2; fy=1.0; 
+		}
+		else
+		{ 
+			fy=sy-floor(sy); 
+		}
 	}
 
 	void bary_z(float z, int &k, float &fz)
@@ -97,9 +118,18 @@ struct Grid
 	{
 		float sz=z*overh-0.5f;
 		k=(int)sz;
-		if(k<0){ k=0; fz=0.0; }
-		else if(k>p.nz-2){ k=p.nz-2; fz=1.0; }
-		else{ fz=sz-floor(sz); }
+		if(k<0)
+		{ 
+			k=0; fz=0.0; 
+		}
+		else if(k>Nz-2)
+		{ 
+			k=Nz-2; fz=1.0; 
+		}
+		else
+		{ 
+			fz=sz-floor(sz); 
+		}
 	}
 
 	void save_velocities()
@@ -111,7 +141,6 @@ struct Grid
 
 	void get_velocity_update()
 	{
-		
 		//du,dv,dw holds the saved velocites
 		//u, v, w hols the new velocities
 		//Thus the change in velocity in e.g u is: u - du
@@ -141,37 +170,28 @@ struct Grid
 
 	void classify_voxel()
 	{
-// 		for(int k = 0; k < Nz; ++k)
-// 			for(int j = 0; j < Ny; ++j)
-// 				for(int i = 0; i < Nx; ++i)
-// 				{
-// 					if( i == 0 || i == Nx - 1 || j == 0 || k == 0 || k == Nz - 1)
-// 						marker(i,j,k) = SOLIDCELL;
-// 					//if(j == 0)
-// 				}
+		for(int k = 0; k<Nz; ++k)
+			for(int j = 0; j < Ny; ++j)
+				marker(0,j,k) = marker(Nx-1,j,k) = SOLIDCELL; //Left, right wall u component
 
-		for(int k = 0; k<u.nz; ++k)
-			for(int j = 0; j < u.ny; ++j)
-				marker(0,j,k) = marker(u.nx-1,j,k) = SOLIDCELL; //Left, right wall u component
-
-		for(int k = 0; k<v.nz; ++k)
-			for(int i = 0; i < v.nx; ++i)
+		for(int k = 0; k<Nz; ++k)
+			for(int i = 0; i < Nx; ++i)
 				marker(i,0,k) = SOLIDCELL; //floor v component
 
-		for(int j = 0; j < w.ny; ++j)
-			for(int i = 0; i < w.nx; ++i)
-				marker(i,j,0) = marker(i,j,w.nz-1) = SOLIDCELL; //Front back wall w component
+		for(int j = 0; j < Ny; ++j)
+			for(int i = 0; i < Nx; ++i)
+				marker(i,j,0) = marker(i,j,Nz-1) = SOLIDCELL; //Front back wall w component
 	}
 	
 	void apply_boundary_conditions() //As of know we set zero on the boundary "floor"
 	{
 		//Project velocities
 
-		for(int k = 0; k<u.nz; ++k)
+		for(int k = 0; k < u.nz; ++k)
 			for(int j = 0; j < u.ny; ++j)
 				u(0,j,k) = u(1,j,k) = u(u.nx-1,j,k) = u(u.nx-2,j,k) = 0; //Left, right wall u component
 
-		for(int k = 0; k<v.nz; ++k)
+		for(int k = 0; k < v.nz; ++k)
 			for(int i = 0; i < v.nx; ++i)
 				v(i,0,k) = v(i,1,k) = 0; //floor v component
 
@@ -205,7 +225,7 @@ void Grid::solve_pressure(int maxiterations, double tolerance)
 {
 	//poisson.write_file_to_matlab("test.txt");
 
-	cg.solve(poisson,rhs,maxiterations,tolerance,x,marker);
+	cg.solve(poisson,rhs,maxiterations,tolerance,pressure,marker);
 }
 
 //----------------------------------------------------------------------------//
@@ -214,7 +234,7 @@ void Grid::solve_pressure(int maxiterations, double tolerance)
 //----------------------------------------------------------------------------//
 void Grid::project(float dt)
 {
-	float scale = overh * dt / rho;
+	float scale = 1.0;//dt / (rho * h);
 	int offset;
 	float val;
 	for(int k = 0; k < Nz; ++k)
@@ -223,8 +243,10 @@ void Grid::project(float dt)
 			{
 				if(marker(i,j,k) == FLUIDCELL)
 				{
-					offset = i + Nx*(j + Ny*k); //Offset into rhs.data array
-					val = scale * float(x.data[offset]);
+					val = scale * float(pressure(i,j,k));
+					
+					if( val != val )
+						int apa = 0;
 
 					u(i,j,k) -= val;
 					u(i+1,j,k) += val;
@@ -238,14 +260,14 @@ void Grid::project(float dt)
 				}
 				else if(marker(i,j,k) == SOLIDCELL)
 				{
-					u(i,j,k) = 0;
-					u(i+1,j,k) = 0;
+					u(i,j,k) = 0.0f;
+					u(i+1,j,k) = 0.0f;
 
-					v(i,j,k) = 0;
-					v(i,j+1,k) = 0;
+					v(i,j,k) = 0.0f;
+					v(i,j+1,k) = 0.0f;
 
-					w(i,j,k) = 0;
-					w(i,j,k+1) = 0;
+					w(i,j,k) = 0.0f;
+					w(i,j,k+1) = 0.0f;
 				}
 			}
 }
@@ -257,10 +279,61 @@ void Grid::project(float dt)
 //----------------------------------------------------------------------------//
 void Grid::calc_divergence()
 {
-	rhs.zero();
 	int offset;
-	double scale = overh;
-	for(int k = 0; k < Nx; ++k)
+	double scale = 1.0;///h;
+
+	for(int k = 0; k < Nz; ++k)
+	{
+		for(int j = 0; j < Ny; ++j)
+		{
+			for(int i = 0; i < Nx; ++i)
+			{
+				if(marker(i,j,k) == FLUIDCELL)
+				{
+					rhs(i,j,k) = -scale * (	u(i+1,j,k) - u(i,j,k) +
+											v(i,j+1,k) - v(i,j,k) + 
+											w(i,j,k+1) - w(i,j,k) );				
+				}
+			}
+		}
+	}
+
+	//Account for SOLID cells
+	for(int k = 0; k < Nz; ++k)
+	{
+		for(int j = 0; j < Ny; ++j)
+		{
+			for(int i = 0; i < Nx; ++i)
+			{
+				if(marker(i,j,k) == FLUIDCELL)
+				{
+					//u
+					if(marker(i-1,j,k) == SOLIDCELL)
+						rhs(i,j,k) -= scale * u(i,j,k);
+					
+					if(marker(i+1,j,k) == SOLIDCELL)
+						rhs(i,j,k) += scale * u(i+1,j,k);
+					
+					//v
+					if(marker(i,j-1,k) == SOLIDCELL)
+						rhs(i,j,k) -= scale * v(i,j,k);
+
+					if(marker(i,j+1,k) == SOLIDCELL)
+						rhs(i,j,k) += scale * v(i,j+1,k);
+
+					//w
+					if(marker(i,j,k-1) == SOLIDCELL)
+						rhs(i,j,k) -= scale * w(i,j,k);
+
+					if(marker(i,j,k+1) == SOLIDCELL)
+						rhs(i,j,k) += scale * w(i,j,k+1);
+									
+				}
+			}
+		}
+	}
+	
+	/*for(int k = 0; k < Nx; ++k)
 		for(int j = 0; j < Ny; ++j)
 			for(int i = 0; i < Nz; ++i)
 			{
@@ -292,6 +365,8 @@ void Grid::calc_divergence()
 					rhs.data[offset] *= -scale;
 				}
 			}
+
+			*/
 }
 
 //----------------------------------------------------------------------------//
@@ -299,8 +374,7 @@ void Grid::calc_divergence()
 //----------------------------------------------------------------------------//
 void Grid::form_poisson(float dt)
 {
-	poisson.zero();
-	double scale = overh * overh * dt / rho; // dt / (rho * dx^2) = (1/dx^2) * dt / rho
+	double scale = 1.0;//dt / (rho*h*h); // dt / (rho * dx^2) = (1/dx^2) * dt / rho
 	for(int k = 1; k < Nz-1; ++k)
 		for(int j = 1; j < Ny-1; ++j)
 			for(int i = 1; i < Nx-1; ++i)

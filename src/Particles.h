@@ -42,9 +42,6 @@ struct Particles
 	{
 		std::memset(vel, 0, maxnp*sizeof(vec3f));
 		std::memset(pos, 0, maxnp*sizeof(vec3f));
-		weightsumx.zero();
-		weightsumy.zero();
-		weightsumz.zero();
 		currnp = 0;
 	}
 
@@ -74,7 +71,7 @@ void update_from_grid(Particles & particles, Grid & grid)
 		//particles.vel[p] += vec3f(grid.du.trilerp(ui,j,k,ufx,fy,fz), grid.dv.trilerp(i,vj,k,fx,vfy,fz), grid.dw.trilerp(i,j,wk,fx,fy,wfz));
 		
 		//PIC/FLIP
-		float alpha = 0.05f;
+		float alpha = 0.2f;
 		particles.vel[p] =  alpha*vec3f(grid.u.trilerp(ui,j,k,ufx,fy,fz), grid.v.trilerp(i,vj,k,fx,vfy,fz), grid.w.trilerp(i,j,wk,fx,fy,wfz))
 			+ (1.0f - alpha)*(particles.vel[p] + vec3f(grid.du.trilerp(ui,j,k,ufx,fy,fz), grid.dv.trilerp(i,vj,k,fx,vfy,fz), grid.dw.trilerp(i,j,wk,fx,fy,wfz)));
 
@@ -124,10 +121,7 @@ void transfer_to_grid(Particles & particles, Grid & grid)
 {
 	int ui, vj, wk,i,j,k;
 	float fx, ufx, fy, vfy, fz, wfz;
-	grid.marker.zero();
-	grid.u.zero();
-	grid.v.zero();
-	grid.w.zero();
+	
 	particles.weightsumx.zero();
 	particles.weightsumy.zero();
 	particles.weightsumz.zero();
@@ -177,8 +171,8 @@ void transfer_to_grid(Particles & particles, Grid & grid)
 	for (int p = 0; p < particles.currnp; ++p)
 	{
 		grid.bary_x(particles.pos[p][0],i,fx);
-		grid.bary_x(particles.pos[p][1],j,fy);
-		grid.bary_x(particles.pos[p][2],k,fz);
+		grid.bary_y(particles.pos[p][1],j,fy);
+		grid.bary_z(particles.pos[p][2],k,fz);
 		grid.marker(i,j,k) = FLUIDCELL;
 	}
 	
@@ -228,9 +222,9 @@ void get_position_larray(Particles & particles, float posArray[])
 	float * itr = posArray;
 	for (vec3f * ppos = particles.pos; ppos < particles.pos + particles.currnp; ++ppos )
 	{
-		*itr++ = (*ppos)[0]*10;
-		*itr++ = (*ppos)[1]*10;
-		*itr++ = (*ppos)[2]*10;
+		*itr++ = (*ppos)[0]*11;
+		*itr++ = (*ppos)[1]*11;
+		*itr++ = (*ppos)[2]*11;
 	}
 }
 
