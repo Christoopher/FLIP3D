@@ -13,6 +13,7 @@ struct VectorN
 {
 	VectorN() : size(0) {}
 
+
 	VectorN(int dimx_, int dimy_, int dimz_) 
 	{
 		init(dimx_, dimy_, dimz_);

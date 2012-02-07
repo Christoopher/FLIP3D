@@ -3,6 +3,7 @@
 uniform mat4 projectionMatrix;
 uniform mat4 modelViewMatrix;
 
+
 in vec3 vertex;
 in vec3 position;
 in float isFluid;
