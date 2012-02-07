@@ -43,18 +43,35 @@ void Fluid_Solver::reset()
 
 void Fluid_Solver::init_box()
 {
+// 	srand ( time(NULL) );
+// 	float r1,r2,r3;
+// 	for(float k = 3; k < 13; ++k)
+// 		for(float j = 15; j < 25; ++j)
+// 			for(float i = 3; i < 13; ++i)
+// 			{
+// 				for (int p = 0; p < 16; ++p)
+// 				{
+// 					r1 = 0.99f*(float(rand()) / RAND_MAX - 0.5);  // [-0.499999, 0.49999999]
+// 					r2 = 0.99f*(float(rand()) / RAND_MAX - 0.5);
+// 					r3 = 0.99f*(float(rand()) / RAND_MAX - 0.5);
+// 					
+// 					add_particle(particles,vec3f(i+r1 + 0.5f,j+r2 + 0.5f,k+r3 + 0.5f)*grid.h,vec3f(0.0f));
+// 				}
+// 
+// 			}
+
 	srand ( time(NULL) );
 	float r1,r2,r3;
-	for(float k = 3; k < 8; ++k)
-		for(float j = 5; j < 10; ++j)
-			for(float i = 3; i < 8; ++i)
+	for(float k = 3; k < 23; ++k)
+		for(float j = 10; j < 30; ++j)
+			for(float i = 3; i < 23; ++i)
 			{
 				for (int p = 0; p < 8; ++p)
 				{
 					r1 = 0.99f*(float(rand()) / RAND_MAX - 0.5);  // [-0.499999, 0.49999999]
 					r2 = 0.99f*(float(rand()) / RAND_MAX - 0.5);
 					r3 = 0.99f*(float(rand()) / RAND_MAX - 0.5);
-					
+
 					add_particle(particles,vec3f(i+r1 + 0.5f,j+r2 + 0.5f,k+r3 + 0.5f)*grid.h,vec3f(0.0f));
 				}
 

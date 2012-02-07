@@ -176,7 +176,7 @@ struct Grid
 
 		for(int k = 0; k<Nz; ++k)
 			for(int i = 0; i < Nx; ++i)
-				marker(i,0,k) = SOLIDCELL; //floor v component
+				marker(i,0,k) = marker(i,Ny-1,k) = SOLIDCELL; //floor v component
 
 		for(int j = 0; j < Ny; ++j)
 			for(int i = 0; i < Nx; ++i)
@@ -193,7 +193,7 @@ struct Grid
 
 		for(int k = 0; k < v.nz; ++k)
 			for(int i = 0; i < v.nx; ++i)
-				v(i,0,k) = v(i,1,k) = 0; //floor v component
+				v(i,0,k) = v(i,1,k) = v(i,v.ny-1,k) = v(i,v.ny-2,k) = 0; //floor v component
 
 		for(int j = 0; j < w.ny; ++j)
 			for(int i = 0; i < w.nx; ++i)

@@ -369,7 +369,7 @@ void OpenGl_drawAndUpdate(bool &running)
 	modelViewMatrix.Rotate(-rotDx,1.0f,0.0f,0.0f);
 	modelViewMatrix.Rotate(-rotDy,0.0f,1.0f,0.0f);	
 
-	modelViewMatrix.Translate(-5.0,-5.0,-5.0);
+	modelViewMatrix.Translate(-16.0,-16.0,-16.0);
 	
 		
 	DrawParticles();

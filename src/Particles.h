@@ -71,7 +71,7 @@ void update_from_grid(Particles & particles, Grid & grid)
 		//particles.vel[p] += vec3f(grid.du.trilerp(ui,j,k,ufx,fy,fz), grid.dv.trilerp(i,vj,k,fx,vfy,fz), grid.dw.trilerp(i,j,wk,fx,fy,wfz));
 		
 		//PIC/FLIP
-		float alpha = 0.2f;
+		float alpha = 0.1f;
 		particles.vel[p] =  alpha*vec3f(grid.u.trilerp(ui,j,k,ufx,fy,fz), grid.v.trilerp(i,vj,k,fx,vfy,fz), grid.w.trilerp(i,j,wk,fx,fy,wfz))
 			+ (1.0f - alpha)*(particles.vel[p] + vec3f(grid.du.trilerp(ui,j,k,ufx,fy,fz), grid.dv.trilerp(i,vj,k,fx,vfy,fz), grid.dw.trilerp(i,j,wk,fx,fy,wfz)));
 
@@ -222,9 +222,9 @@ void get_position_larray(Particles & particles, float posArray[])
 	float * itr = posArray;
 	for (vec3f * ppos = particles.pos; ppos < particles.pos + particles.currnp; ++ppos )
 	{
-		*itr++ = (*ppos)[0]*11;
-		*itr++ = (*ppos)[1]*11;
-		*itr++ = (*ppos)[2]*11;
+		*itr++ = (*ppos)[0]*32;
+		*itr++ = (*ppos)[1]*32;
+		*itr++ = (*ppos)[2]*32;
 	}
 }
 

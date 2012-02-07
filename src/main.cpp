@@ -17,9 +17,9 @@
 
 bool running = true;
 const int perCell = 8;
-const int box = 5;
+const int box = 20;
 const int Nparticles = box*box*box*perCell;
-const int Nvoxels = 11;
+const int Nvoxels = 32;
 
 void initVoxels(float * voxelPositions, Array3f & voxelFlags, int k)
 {
@@ -145,11 +145,11 @@ int main(void)
 	float * verticies = new float[3*Nparticles];
 	float * velocities = new float[3*Nparticles];
 
-	Array3f voxelFlags(Nvoxels,Nvoxels,Nvoxels);
-	float * voxelPositions  = new float[3*Nvoxels*Nvoxels*Nvoxels];
-	initVoxels(voxelPositions,voxelFlags,Nvoxels);
+	//Array3f voxelFlags(Nvoxels,Nvoxels,Nvoxels);
+	//float * voxelPositions  = new float[3*Nvoxels*Nvoxels*Nvoxels];
+	//initVoxels(voxelPositions,voxelFlags,Nvoxels);
 
-	Fluid_Solver fluid_solver(Nvoxels,Nvoxels,Nvoxels,1.0/10,9.82f,1,Nparticles);
+	Fluid_Solver fluid_solver(Nvoxels,Nvoxels,Nvoxels,1.0/100,9.82f,1000,Nparticles);
 	
 
 	float h = fluid_solver.grid.h;
@@ -164,7 +164,7 @@ int main(void)
 	get_position_larray(fluid_solver.particles, verticies);
 	get_velocity_larray(fluid_solver.particles, velocities);
 	OpenGl_initParticles(verticies, velocities, sizeof(float)*3*Nparticles, Nparticles);
-	OpenGl_initWireframeCube(voxelPositions,voxelFlags.data,Nvoxels);
+	//OpenGl_initWireframeCube(voxelPositions,voxelFlags.data,Nvoxels);
 
 
 	while(running) {
@@ -182,18 +182,18 @@ int main(void)
 		get_velocity_larray(fluid_solver.particles,velocities);
 		OpenGl_updateParticleVelocity(velocities,sizeof(float)*3*Nparticles);
 		
-		if(showgrid)
-		{
-			fluid_solver.grid.classify_voxel();
-			update_voxel_flags(fluid_solver.grid,voxelFlags);
-			OpenGl_updateVoxels(voxelPositions, voxelFlags.data, Nvoxels);
-		}
+// 		if(showgrid)
+// 		{
+// 			fluid_solver.grid.classify_voxel();
+// 			update_voxel_flags(fluid_solver.grid,voxelFlags);
+// 			OpenGl_updateVoxels(voxelPositions, voxelFlags.data, Nvoxels);
+// 		}
 
 	}
 
 	delete [] verticies;
 	delete [] velocities;
-	delete [] voxelPositions;
+	//delete [] voxelPositions;
 
 	return 0;
 }
