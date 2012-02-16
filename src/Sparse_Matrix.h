@@ -87,7 +87,7 @@ struct Sparse_Matrix
 
 	void init(int dimx_, int dimy_, int dimz_)
 	{
-		dimx = dimz_; dimy = dimy_; dimz = dimz_;
+		dimx = dimx_; dimy = dimy_; dimz = dimz_;
 		size = 4*dimx*dimy*dimz;
 		stride_y = 4*dimx;
 		stride_z = stride_y*dimy;
@@ -194,6 +194,7 @@ void mtx_mult_vectorN(const Sparse_Matrix & A, const VectorN & d, VectorN & Adj,
 	
 	//All boundary cells are SOLIDS
 	//Thus the boundary cell rows in the Poisson matrix are ZERO: No need to operate on them
+	Adj.zero();
 	for(int k = 1; k < A.dimz-1; ++k)
 		for(int j = 1; j < A.dimy-1; ++j)
 			for (int i = 1; i < A.dimx-1; ++i)

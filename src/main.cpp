@@ -18,7 +18,7 @@ bool running = true;
 const int perCell = 8;
 const int box = 10;
 const int Nparticles = 70000*perCell;
-const int dimx = 32, dimy = 32, dimz = 32;
+const int dimx = 64, dimy = 32, dimz = 32;
 
 void initVoxels(float * voxelPositions, Array3f & voxelFlags, int k)
 {

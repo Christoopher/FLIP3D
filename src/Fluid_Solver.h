@@ -66,6 +66,25 @@ void Fluid_Solver::init_box()
 
 			}
 
+			for(float k = 1; k < 31; ++k)
+				for(float j = 1; j < 31; ++j)
+					for(float i = 59; i < 63; ++i)
+					{
+						for (int kk = -1; kk < 1; ++kk)
+							for(int jj = -1; jj < 1; ++jj)
+								for (int ii = -1; ii < 1; ++ii)
+								{
+									r1 = float(rand()) / RAND_MAX - 0.5; //[-0.5, 0.5]
+									r2 = float(rand()) / RAND_MAX - 0.5;
+									r3 = float(rand()) / RAND_MAX - 0.5;
+									pos[0] = (i+0.5f)*grid.h + (ii + 0.5f + 0.95*r1)*subh;
+									pos[1] = (j+0.5f)*grid.h + (jj + 0.5f + 0.95*r2)*subh;
+									pos[2] = (k+0.5f)*grid.h + (kk + 0.5f + 0.95*r3)*subh;
+									add_particle(particles,pos,vec3f(0.0f));
+								}
+
+					}
+
 
 // 			for(float k = 20; k < 30; ++k)
 // 				for(float j = 10; j < 30; ++j)
@@ -120,7 +139,7 @@ void Fluid_Solver::step(float dt)
 	grid.calc_divergence();
 	grid.solve_pressure(100,1e-6);
 	grid.project(dt);
-	grid.extend_velocity();
+	//grid.extend_velocity();
 	grid.apply_boundary_conditions();
 	grid.get_velocity_update();
 	update_from_grid(particles,grid);

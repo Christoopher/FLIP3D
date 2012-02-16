@@ -17,8 +17,10 @@ struct Grid
 	Array3f u,v,w,du,dv,dw; //Staggered u,v,w velocities
 	Array3c marker; //Voxel classification
 	Sparse_Matrix poisson; // The matrix for pressure stage
+	Sparse_Matrix precond; // The matrix for pressure stage
 	VectorN rhs; //Right hand side of the poisson equation
 	VectorN pressure; //Right hand side of the poisson equation
+
 	Uncondioned_CG_Solver cg;
 
 	Grid() {}
@@ -41,6 +43,7 @@ struct Grid
 		dw.init(Nx_,Ny_,Nz_+1);
 		marker.init(Nx_,Ny_,Nz_);
 		poisson.init(Nx_,Ny_,Nz_);
+		precond.init(Nx_,Ny_,Nz_);
 		rhs.init(Nx_,Ny_,Nz_);
 		pressure.init(Nx_,Ny_,Nz_);
 		cg.init(Nx_,Ny_,Nz_);
@@ -162,17 +165,18 @@ struct Grid
 
 	void classify_voxel()
 	{
-		for(int k = 0; k<Nz; ++k)
+		for(int k = 0; k < Nz; ++k)
 			for(int j = 0; j < Ny; ++j)
 				marker(0,j,k) = marker(Nx-1,j,k) = SOLIDCELL; //Left, right wall cells
 
-		for(int k = 0; k<Nz; ++k)
+		for(int k = 0; k < Nz; ++k)
 			for(int i = 0; i < Nx; ++i)
 				marker(i,0,k) = marker(i,Ny-1,k) = SOLIDCELL; //floor, roof cells
 
 		for(int j = 0; j < Ny; ++j)
 			for(int i = 0; i < Nx; ++i)
 				marker(i,j,0) = marker(i,j,Nz-1) = SOLIDCELL; //Front back wall cells
+
 	}
 	
 	void apply_boundary_conditions()
@@ -231,33 +235,62 @@ struct Grid
 	void project(float dt);
 	void solve_pressure(int maxiterations, double tolerance);
 	void extend_velocity();
+	void form_precond();
 
 };
 
 
+void Grid::form_precond()
+{
+	double e = 0;
+	precond.zero();
+	double tau = 0.97, gamma = 0.25;
+
+	for(int k = 1; k < Nz-1; ++k)
+		for(int j = 1; j < Ny-1; ++j)
+			for(int i = 1; i < Nx-1; ++i)
+			{
+				if(marker(i,j,k) == FLUIDCELL)
+				{
+					e = poisson(i,j,k,0)	- sqr(poisson(i-1,j,k,1) * precond(i-1,j,k,0))
+											- sqr(poisson(i,j-1,k,2) * precond(i,j-1,k,0))
+											- sqr(poisson(i,j,k-1,3) * precond(i,j,k-1,0))
+											- tau * 
+											( 
+												poisson(i-1,j,k,1) * (poisson(i-1,j,k,2) + poisson(i-1,j,k,3) ) * sqr(precond(i-1,j,k,0))
+												+poisson(i,j-1,k,2) * (poisson(i,j-1,k,1) + poisson(i,j-1,k,3) ) * sqr(precond(i,j-1,k,0))
+												+poisson(i,j,k-1,3) * (poisson(i,j,k-1,1) + poisson(i,j,k-1,2) ) * sqr(precond(i,j,k-1,0))
+											);
+					if( e < gamma*poisson(i,j,k,0))
+						e = poisson(i,j,k,0);
+
+					precond(i,j,k,0) = 1.0/sqrt(e);
+				}
+			}
+}
+
 void Grid::extend_velocity()
 {
-	for(int k = 0; k < Nz; ++k)
-		for(int j = 0; j < Ny; ++j)
-			for(int i = 0; i < Nx; ++i)
+	for(int k = 1; k < Nz-1; ++k)
+		for(int j = 1; j < Ny-1; ++j)
+			for(int i = 1; i < Nx-1; ++i)
 			{
-				if(marker(i,j,k) != FLUIDCELL) //Either air or solid
+				if(marker(i,j,k) == FLUIDCELL)
 				{
-					if(marker(i+1,j,k) == FLUIDCELL && marker(i-1,j,k) !=FLUIDCELL)
-						u(i,j,k) = u(i+1,j,k);
-					if(marker(i+1,j,k) != FLUIDCELL && marker(i-1,j,k) ==FLUIDCELL)
-						u(i+1,j,k) = u(i,j,k);
+					if(marker(i,j-1,k) != FLUIDCELL)
+					{
+						u(i,j-1,k) = u(i,j,k);
+						u(i+1,j-1,k) = u(i+1,j,k);
+					}
 
-					if(marker(i,j+1,k) == FLUIDCELL && marker(i,j-1,k) != FLUIDCELL)
-						v(i,j,k) = v(i,j+1,k);
-					if(marker(i,j+1,k) != FLUIDCELL && marker(i,j-1,k) == FLUIDCELL)
-						v(i,j+1,k) = v(i,j,k);
-
-
-					if(marker(i,j,k+1) == FLUIDCELL && marker(i,j,k-1) != FLUIDCELL)
-						w(i,j,k) = w(i,j+1,k);
-					if(marker(i,j+1,k) != FLUIDCELL && marker(i,j-1,k) == FLUIDCELL)
-						w(i,j,k+1) = w(i,j,k);
+					if(marker(i,j+1,k) != FLUIDCELL)
+					{
+						u(i,j+1,k) = u(i,j,k);
+						u(i+1,j+1,k) = u(i+1,j,k);
+					}
+					
+					w(i,j-1,k) = w(i,j,k);
+					w(i,j-1,k+1) = w(i,j,k+1);
 
 				}
 			}
@@ -267,14 +300,15 @@ void Grid::extend_velocity()
 void Grid::solve_pressure(int maxiterations, double tolerance)
 {
 	//poisson.write_file_to_matlab("test.txt");
-
-	cg.solve(poisson,rhs,maxiterations,tolerance,pressure,marker);
+	form_precond();
+	cg.solve_precond(poisson,rhs,precond,100,tolerance,pressure,marker);
+	//cg.solve(poisson,rhs,maxiterations,tolerance,pressure,marker);
 }
 
 //----------------------------------------------------------------------------//
 // Subtracts the pressure gradient from the velocities making the velocity field 
 // divergence free
-//----------------------------------------------------------------------------//
+//----------------------------------------------------------------------------//	
 void Grid::project(float dt)
 {
 	float scale = dt / (rho * h);
