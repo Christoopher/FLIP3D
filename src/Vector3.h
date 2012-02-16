@@ -52,6 +52,7 @@ struct vec3f
 		v[2] /= scalar;
 		return *this;
 	}
+
 }; 
 
 

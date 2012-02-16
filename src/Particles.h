@@ -1,6 +1,11 @@
 #ifndef _PARTICLES_H_
 #define _PARTICLES_H_
 
+#include <iostream>
+#include <sstream>
+#include <fstream>
+
+
 #include "Vector3.h"
 #include "Grid.h"
 #include "Array3D.h"
@@ -261,6 +266,22 @@ void get_position_larray(Particles & particles, float posArray[])
 	}
 }
 
+void write_paricle_pos_binary(Particles & particles)
+{
+	static int frame = 0;
+	std::stringstream ss;
+	ss << "frame_" << frame << ".dat";
+	std::string str = ss.str();
+	FILE *file = fopen(str.c_str(),"wb");
 
+	for (int i = 0; i < particles.currnp; ++i)
+	{
+		fwrite((const void *) (particles.pos[i].v),sizeof(float),3,file);
+	}
+
+	fclose(file);
+
+	frame++;
+}
 
 #endif

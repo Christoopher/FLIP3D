@@ -18,7 +18,7 @@ bool running = true;
 const int perCell = 8;
 const int box = 10;
 const int Nparticles = 70000*perCell;
-const int dimx = 64, dimy = 32, dimz = 32;
+const int dimx = 64, dimy = 64, dimz = 32;
 
 void initVoxels(float * voxelPositions, Array3f & voxelFlags, int k)
 {
@@ -37,7 +37,7 @@ void initVoxels(float * voxelPositions, Array3f & voxelFlags, int k)
 
 }
 
-void TestSSE() 
+/*void TestSSE() 
 {
 	vec3f v1(1.0,2.0,1.0);
 	SSE::vec3f v2(1.0,2.0,1.0);
@@ -66,7 +66,7 @@ void TestSSE()
 	std::cout << time.getElapsedTime() << std::endl;
 	std::cout << result  << std::endl;
 	std::cin.get();
-}
+}*/
 
 void update_voxel_flags(Grid & grid, Array3f & flags)
 {
@@ -89,7 +89,7 @@ int main(void)
 // 	float * voxelPositions  = new float[3*Nvoxels*Nvoxels*Nvoxels];
 // 	initVoxels(voxelPositions,voxelFlags,Nvoxels);
 
-	Fluid_Solver fluid_solver(dimx,dimy,dimz,1.0f/32.0f,1.0f/30.0f,9.82f,1,Nparticles);
+	Fluid_Solver fluid_solver(dimx,dimy,dimz,1.0f/32.0f,1.0f/30.0f,9.82f,1000,Nparticles);
 	fluid_solver.init_box();
 
 	OpenGl_initViewer(600, 600,fluid_solver.grid);
@@ -104,7 +104,10 @@ int main(void)
 		OpenGl_drawAndUpdate(running);
 
 		if(step || play)
+		{
 			fluid_solver.step_frame();
+		//	write_paricle_pos_binary(fluid_solver.particles);
+		}
 
 		OpenGl_updateParticleLocation(fluid_solver.particles.pos, sizeof(vec3f)*fluid_solver.particles.currnp);
 		OpenGl_updateParticleVelocity(fluid_solver.particles.vel,sizeof(vec3f)*fluid_solver.particles.currnp);
