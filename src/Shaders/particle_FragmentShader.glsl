@@ -7,7 +7,5 @@ in vec3 color;
 void main(void)
 {
 	//Do velocity based shading here
-	//Code
-	vec3 poo = mix(vec3(0.25f,0.25f,1.0f),vec3(1.0f),smoothstep(0.0f,3.0f,length(color)));
-	fragColor = vec4(poo,1.0);
+	fragColor = mix(vec4(0.25f,0.25f,1.0f,1.0f),vec4(1.0f),smoothstep(0.0f,3.0f,length(color)));
 }

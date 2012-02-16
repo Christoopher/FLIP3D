@@ -12,13 +12,14 @@
 #include "wglew.h"
 #include "glfw.h"
 
-
 //GLTools
 #include "math3d.h"
 #include "GLFrame.h"
 #include "GLMatrixStack.h"
 #include "GLFrustum.h"
 #include "GLGeometryTransform.h"
+#include "Vector3.h"
+#include "Grid.h"
 
 //----------------------------------------------------------------------------//
 // Variables declaration
@@ -31,6 +32,7 @@ float posDx = 0.0f, posDy = 0.0f, zoom = 0.0f, rotDx = 0.0f, rotDy = 0.0f;
 int nrOfParticles, nrOfVoxels;
 double t0 = 0;
 int frames = 0;
+Grid *grid;
 
 bool step = false, reset = false, showgrid = false, play = false;
 
@@ -46,6 +48,10 @@ GLuint particle_ModelViewMtxLocation;
 GLuint particle_ProjectionMtxLocation;
 GLuint particle_VertexLocation;
 GLuint particle_VelocityLocation;
+GLuint particle_dimxLocation;
+GLuint particle_dimyLocation;
+GLuint particle_dimzLocation;
+GLuint particle_hLocation;
 
 //Shader for drawing instanced wireframe cubes
 //to display grid
@@ -170,6 +176,10 @@ void initShaders()
 	particle_ProjectionMtxLocation = glGetUniformLocationARB(particle_SP,"projectionMatrix");
 	particle_VertexLocation = glGetAttribLocation(particle_SP,"vertex");
 	particle_VelocityLocation = glGetAttribLocation(particle_SP,"velocity");
+	particle_dimzLocation = glGetUniformLocationARB(particle_SP, "dimz");
+	particle_hLocation = glGetUniformLocationARB(particle_SP, "h");
+
+
 	getOpenGLError();
 
 	instancedVoxel_SP = glCreateProgramObjectARB();
@@ -214,7 +224,7 @@ void OpenGl_initWireframeCube(void * positions, void * flags, int nrOfVoxels_)
 	nrOfVoxels = nrOfVoxels_*nrOfVoxels_*nrOfVoxels_;
 	size_t positionSize = 3*sizeof(float)*nrOfVoxels;
 	size_t flagSize = sizeof(float)*nrOfVoxels;
-	
+
 
 	glGenVertexArrays(1,&unitWFCube_VAO);
 	glGenBuffers(1,&unitWFCube_vert_VBO);
@@ -251,7 +261,7 @@ void OpenGl_initWireframeCube(void * positions, void * flags, int nrOfVoxels_)
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, unitWFCube_ind_VBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER,sizeof(unitWFCubeindices), unitWFCubeindices,GL_STATIC_DRAW);
 	getOpenGLError();
-		
+
 	glBindVertexArray(0);
 }
 
@@ -281,7 +291,7 @@ void OpenGl_updateParticleVelocity(void * velocity, size_t size)
 void OpenGl_updateVoxels(void * positions,void * flags, int nrOfVoxels_)
 {
 	nrOfVoxels = nrOfVoxels_*nrOfVoxels_*nrOfVoxels_;
-	size_t PosSize = 3*sizeof(float)*nrOfVoxels;
+	size_t PosSize = sizeof(vec3f)*nrOfVoxels;
 	size_t FlagSize = sizeof(float)*nrOfVoxels;
 	glBindBuffer(GL_ARRAY_BUFFER ,unitWFCube_flags_and_postions_VBO);
 	glBufferSubData(GL_ARRAY_BUFFER,0, PosSize,positions);
@@ -316,11 +326,12 @@ void DrawParticles()
 	glBindVertexArray(particle_VAO);
 	glUniformMatrix4fv(particle_ModelViewMtxLocation, 1, GL_FALSE, transformPipeline.GetModelViewMatrix());
 	glUniformMatrix4fv(particle_ProjectionMtxLocation, 1, GL_FALSE, transformPipeline.GetProjectionMatrix());
-	getOpenGLError();
+	glUniform1iv(particle_dimzLocation,1,&grid->Nz);
+	glUniform1fv(particle_hLocation,1,&grid->h);
 
-	glPointSize(2.0);
+	glPointSize(4.0);
 	glDrawArrays(GL_POINTS,0,nrOfParticles);
-	getOpenGLError();
+
 	glBindVertexArray(0);
 }
 
@@ -350,14 +361,14 @@ void OpenGl_drawAndUpdate(bool &running)
 
 	if(!running)
 		return;
-	
+
 	showFPS(winw, winh, zoom);
 	Resize(); //Update viewport and projection matrix
 
 	//Clear the buffer color and depth
-	glClearColor(0.0,0.0,0.0,1.0);
+	glClearColor(0.5f,0.5f,0.5f,1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	
+
 	//Disables vsync
 	wglSwapIntervalEXT(0);
 
@@ -365,21 +376,21 @@ void OpenGl_drawAndUpdate(bool &running)
 	M3DMatrix44f mCamera;
 	cameraFrame.GetCameraMatrix(mCamera);		
 	modelViewMatrix.PushMatrix(mCamera);
-	modelViewMatrix.Translate(0.0f,0.0f,zoom);
+	modelViewMatrix.Translate(posDx,posDy,zoom);
 	modelViewMatrix.Rotate(-rotDx,1.0f,0.0f,0.0f);
-	modelViewMatrix.Rotate(-rotDy,0.0f,1.0f,0.0f);	
+	modelViewMatrix.Rotate(-rotDy,0.0f,1.0f,0.0f);
 
-	modelViewMatrix.Translate(-16.0,-16.0,-16.0);
-	
-		
+	modelViewMatrix.Translate(-grid->Nx*0.5f,-grid->Ny*0.5f,-grid->Nz*0.5f);
+
+
 	DrawParticles();
 
 	if(showgrid)
 		DrawVoxels();
 
-	
+
 	modelViewMatrix.PopMatrix();
-	
+
 	glfwSwapBuffers();
 
 }
@@ -411,6 +422,16 @@ void GLFWCALL KeyboardFunc( int key, int action )
 		step = true;
 	if(key == 'S' && action == GLFW_RELEASE)
 		step = false;
+
+	if(key == 'C' && action == GLFW_PRESS) //Cam reset
+	{
+		rotDy = 0;
+		rotDx = 0;
+		posDx = 0;
+		posDy = 0;
+		zoom = 0;
+
+	}
 }
 
 
@@ -437,10 +458,15 @@ void GLFWCALL MouseWheelFunc( int pos )
 //----------------------------------------------------------------------------//
 void GLFWCALL MousePosFunc( int x, int y )
 {
-	if(glfwGetKey(GLFW_KEY_LCTRL) == GLFW_PRESS && glfwGetMouseButton(GLFW_MOUSE_BUTTON_1) == GLFW_PRESS){
+	if(glfwGetKey(GLFW_KEY_LCTRL) == GLFW_PRESS && glfwGetMouseButton(GLFW_MOUSE_BUTTON_1) == GLFW_PRESS)
+	{
 		rotDy += (lastmousex - x) * 0.5;
 		rotDx += (lastmousey - y) * 0.5;
-		
+	}
+	else if(glfwGetMouseButton(GLFW_MOUSE_BUTTON_1) == GLFW_PRESS)
+	{
+		posDx -= (lastmousex - x) * 0.05;
+		posDy += (lastmousey - y) * 0.05;
 	}
 	lastmousex = x;
 	lastmousey = y;
@@ -450,8 +476,9 @@ void GLFWCALL MousePosFunc( int x, int y )
 //----------------------------------------------------------------------------//
 // Creates and sets up a window
 //----------------------------------------------------------------------------//
-void OpenGl_initViewer(int width_, int height_)
+void OpenGl_initViewer(int width_, int height_, Grid & grid_)
 {
+	grid = &grid_;
 	winw = width_;
 	winh = height_;
 
@@ -488,8 +515,13 @@ void OpenGl_initViewer(int width_, int height_)
 
 	initShaders();
 
+	glEnable(GL_CULL_FACE);
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_POINT_SMOOTH);
+	
+
 	//Move the camera back 5 units
-	cameraFrame.SetOrigin(0.0f,0.0f,30.0f);
+	cameraFrame.SetOrigin(0.0f,0.0f,5.0f);
 }
 
 

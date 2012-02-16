@@ -18,10 +18,10 @@ struct Fluid_Solver
 	int dimx,dimy,dimz;
 	float timestep;
 
-	Fluid_Solver(int dimx, int dimy, int dimz, float timestep, float gravity,float rho, int max_particles) 
+	Fluid_Solver(int dimx, int dimy, int dimz, float h, float timestep, float gravity,float rho, int max_particles) 
 		: dimx(dimx), dimy(dimy), dimz(dimz), timestep(timestep)
 	{
-		grid.init(dimx,dimy,dimz,1.0f/dimx,gravity, rho);
+		grid.init(dimx,dimy,dimz,h,gravity, rho);
 		particles.init(max_particles,grid);
 	}
 
@@ -43,39 +43,48 @@ void Fluid_Solver::reset()
 
 void Fluid_Solver::init_box()
 {
-// 	srand ( time(NULL) );
-// 	float r1,r2,r3;
-// 	for(float k = 3; k < 13; ++k)
-// 		for(float j = 15; j < 25; ++j)
-// 			for(float i = 3; i < 13; ++i)
-// 			{
-// 				for (int p = 0; p < 16; ++p)
-// 				{
-// 					r1 = 0.99f*(float(rand()) / RAND_MAX - 0.5);  // [-0.499999, 0.49999999]
-// 					r2 = 0.99f*(float(rand()) / RAND_MAX - 0.5);
-// 					r3 = 0.99f*(float(rand()) / RAND_MAX - 0.5);
-// 					
-// 					add_particle(particles,vec3f(i+r1 + 0.5f,j+r2 + 0.5f,k+r3 + 0.5f)*grid.h,vec3f(0.0f));
-// 				}
-// 
-// 			}
-
 	srand ( time(NULL) );
 	float r1,r2,r3;
-	for(float k = 3; k < 23; ++k)
-		for(float j = 10; j < 30; ++j)
-			for(float i = 3; i < 23; ++i)
+	float subh = grid.h/2.0f;
+	vec3f pos(0);
+	for(float k = 1; k < 31; ++k)
+		for(float j = 1; j < 31; ++j)
+			for(float i = 1; i < 5; ++i)
 			{
-				for (int p = 0; p < 8; ++p)
-				{
-					r1 = 0.99f*(float(rand()) / RAND_MAX - 0.5);  // [-0.499999, 0.49999999]
-					r2 = 0.99f*(float(rand()) / RAND_MAX - 0.5);
-					r3 = 0.99f*(float(rand()) / RAND_MAX - 0.5);
-
-					add_particle(particles,vec3f(i+r1 + 0.5f,j+r2 + 0.5f,k+r3 + 0.5f)*grid.h,vec3f(0.0f));
-				}
+				for (int kk = -1; kk < 1; ++kk)
+					for(int jj = -1; jj < 1; ++jj)
+						for (int ii = -1; ii < 1; ++ii)
+						{
+							r1 = float(rand()) / RAND_MAX - 0.5; //[-0.5, 0.5]
+							r2 = float(rand()) / RAND_MAX - 0.5;
+							r3 = float(rand()) / RAND_MAX - 0.5;
+							pos[0] = (i+0.5f)*grid.h + (ii + 0.5f + 0.95*r1)*subh;
+							pos[1] = (j+0.5f)*grid.h + (jj + 0.5f + 0.95*r2)*subh;
+							pos[2] = (k+0.5f)*grid.h + (kk + 0.5f + 0.95*r3)*subh;
+							add_particle(particles,pos,vec3f(0.0f));
+						}
 
 			}
+
+
+// 			for(float k = 20; k < 30; ++k)
+// 				for(float j = 10; j < 30; ++j)
+// 					for(float i = 20; i < 30; ++i)
+// 					{
+// 						for (int kk = -1; kk < 1; ++kk)
+// 							for(int jj = -1; jj < 1; ++jj)
+// 								for (int ii = -1; ii < 1; ++ii)
+// 								{
+// 									r1 = float(rand()) / RAND_MAX - 0.5; //[-0.5, 0.5]
+// 									r2 = float(rand()) / RAND_MAX - 0.5;
+// 									r3 = float(rand()) / RAND_MAX - 0.5;
+// 									pos[0] = (i+0.5f)*grid.h + (ii + 0.5f + 0.95*r1)*subh;
+// 									pos[1] = (j+0.5f)*grid.h + (jj + 0.5f + 0.95*r2)*subh;
+// 									pos[2] = (k+0.5f)*grid.h + (kk + 0.5f + 0.95*r3)*subh;
+// 									add_particle(particles,pos,vec3f(0.0f));
+// 								}
+// 
+// 					}
 }
 
 void Fluid_Solver::step_frame()
@@ -97,10 +106,12 @@ void Fluid_Solver::step_frame()
 
 void Fluid_Solver::step(float dt)
 {
+
+	for (int i = 0; i < 5; i++)
+		move_particles_in_grid(particles,grid,0.2*dt);
+
 	grid.zero();
-
 	transfer_to_grid(particles,grid);
-
 	grid.save_velocities();
 	grid.add_gravity(dt);
 	grid.apply_boundary_conditions();
@@ -109,12 +120,13 @@ void Fluid_Solver::step(float dt)
 	grid.calc_divergence();
 	grid.solve_pressure(100,1e-6);
 	grid.project(dt);
+	grid.extend_velocity();
 	grid.apply_boundary_conditions();
 	grid.get_velocity_update();
 	update_from_grid(particles,grid);
+	
 
-	for (int i = 0; i < 5; i++)
-		advect_particles(particles,0.2*dt);
+	
 }
 
 

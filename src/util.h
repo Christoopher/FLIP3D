@@ -34,4 +34,18 @@ template<class T> inline T max(const T &a1, const T &a2)
 		return a2; 
 }
 
+template<class T> inline T min(const T &a1, const T &a2)
+{	
+	if(a1<a2) 
+		return a1; 
+	else 
+		return a2; 
+}
+
+
+template<class T> inline void clamp(T & toclamp, T minval, T maxval)
+{
+	toclamp = min(maxval, max(toclamp, minval));
+}
+
 #endif

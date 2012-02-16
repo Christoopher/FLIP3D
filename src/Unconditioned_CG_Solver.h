@@ -32,14 +32,14 @@ struct Uncondioned_CG_Solver
 
 void Uncondioned_CG_Solver::solve(const Sparse_Matrix & A,const VectorN & b,int maxiterations, double tol, VectorN & pressure, Array3c &marker)
 {
-	//write_system_to_matlab(A,b,marker); //Debug
 	b.copy_to(r);
-	if(r.infnorm() == 0.0) // we should check sqrt(rnorm) but we don't want to so we check rnorm < tol^2
+	double rinfnorm = r.infnorm();
+	if(rinfnorm == 0.0)
 		return;
 
-	tol = tol*r.infnorm();
+	tol = tol*rinfnorm;
 
-	double rnorm = vectorN_norm2(r); //r(0) = b - Ax(0) = b
+	double rnorm = vectorN_norm2(r);
 	if(rnorm == 0.0)
 		return;
 
@@ -56,15 +56,9 @@ void Uncondioned_CG_Solver::solve(const Sparse_Matrix & A,const VectorN & b,int 
 		//write_system_to_matlab(A,b,marker); //Debug
 		//d.write_file_to_matlab("d.txt",marker);
 		//tmp == A*d(i)
-		double dnorm  = vectorN_dot(d,Adj);
-
-		if(dnorm == 0 || dnorm != dnorm)
-			int apa = 0;
-
-		alpha = rnorm/dnorm;
 		
-		if(alpha != alpha)
-			int apa = 0;
+		alpha = rnorm/vectorN_dot(d,Adj);
+		
 		//Calc new position x(i+1): x(i+1) = x(i) + alpha(i)*d(i);
 		vectorN_add_scale(pressure, d, alpha); //void
 
@@ -76,17 +70,17 @@ void Uncondioned_CG_Solver::solve(const Sparse_Matrix & A,const VectorN & b,int 
 		i++; //We have now moved one step
 		if(r.infnorm() <= tol || i == maxiterations)
 		{
-			std::cout << std::scientific;
-			std::cout << "CG: " << i << " iterations, " << "norm_squared = " << rnextnorm <<  "\n";
-			pressure.write_file_to_matlab("x.txt",marker);
-			break;
+			//std::cout << std::scientific;
+			//std::cout << "CG: " << i << " iterations, " << "norm_squared = " << rnextnorm <<  "\n";
+			//pressure.write_file_to_matlab("x.txt",marker);
+			return;
 		}
-
-		rnextnorm = vectorN_norm2(r); //r = r(i+1)
 
 		// *** Calculate new search direction; d(j+1) ***
 
 		//Calc beta(i+1) = dot(r(i+1),r(i+1)) / dot(r(i),r(i));
+		//the norm of the new residual
+		rnextnorm = vectorN_norm2(r); //r = r(i+1)
 		beta = rnextnorm / rnorm;
 
 		//Calc new search vector d(i+1) = r(i+1) + beta(i+1)*d(i);

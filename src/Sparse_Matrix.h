@@ -191,12 +191,10 @@ void write_system_to_matlab(const Sparse_Matrix & A,const VectorN & vec, Array3c
 
 void mtx_mult_vectorN(const Sparse_Matrix & A, const VectorN & d, VectorN & Adj, Array3c &marker)
 {
-	Adj.zero();
+	
 	//All boundary cells are SOLIDS
 	//Thus the boundary cell rows in the Poisson matrix are ZERO: No need to operate on them
-	int offset;
-	int Adj_Offset = 0;
-	for(int k=1; k<A.dimz-1; ++k)
+	for(int k = 1; k < A.dimz-1; ++k)
 		for(int j = 1; j < A.dimy-1; ++j)
 			for (int i = 1; i < A.dimx-1; ++i)
 			{
@@ -204,24 +202,18 @@ void mtx_mult_vectorN(const Sparse_Matrix & A, const VectorN & d, VectorN & Adj,
 				{
 
 					//No need to zero Adj since we assign the value on the first entry!
-					Adj(i,j,k) += A(i-1,j,k,1)*d(i-1,j,k); //i-1,j,k
-
-					Adj(i,j,k) += A(i,j,k,0)*d(i,j,k); //i,j,k
+					Adj(i,j,k) = A(i,j,k,0)*d(i,j,k); //i,j,k
 					Adj(i,j,k) += A(i,j,k,1)*d(i+1,j,k); //i+1,j,k
-
-					Adj(i,j,k) += A(i,j-1,k,2)*d(i,j-1,k); //i,j-1,k
 					Adj(i,j,k) += A(i,j,k,2)*d(i,j+1,k); //i,j+1,k
-
-					Adj(i,j,k) += A(i,j,k-1,3)*d(i,j,k-1); //i,j,k-1
 					Adj(i,j,k) += A(i,j,k,3)*d(i,j,k+1); //i,j,k+1
+					
+					Adj(i,j,k) += A(i-1,j,k,1)*d(i-1,j,k); //i-1,j,k
+					Adj(i,j,k) += A(i,j-1,k,2)*d(i,j-1,k); //i,j-1,k
+					Adj(i,j,k) += A(i,j,k-1,3)*d(i,j,k-1); //i,j,k-1
+
 				}
 
 			}
-
-}
-
-void vectorN_VectorN_add(const VectorN & lhs, const VectorN & rhs, VectorN & res)
-{
 
 }
 

@@ -12,6 +12,7 @@ out float isFLuid0;
  
 void main(void)
 {	
+
 	isFLuid0 = isFluid;
 	gl_Position = projectionMatrix*modelViewMatrix*vec4(vertex + position,1.0);
 }
