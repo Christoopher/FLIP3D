@@ -14,11 +14,13 @@
 #include "Fluid_Solver.h"
 #include "Unconditioned_CG_Solver.h"
 
-bool running = true;
+#include "ObjLoader.h"
+
+
 const int perCell = 8;
 const int box = 10;
-const int Nparticles = 70000*perCell;
-const int dimx = 64, dimy = 64, dimz = 32;
+const int Nparticles = 30000*perCell;
+const int dimx = 64, dimy = 32, dimz = 32;
 
 void initVoxels(float * voxelPositions, Array3f & voxelFlags, int k)
 {
@@ -82,14 +84,19 @@ void update_voxel_flags(Grid & grid, Array3f & flags)
 	}
 }
 
+CStopWatch stopwatch;
+
+int numframes;
+double avgtime = 0;
 int main(void)
 {
+/*
 // 	int Nvoxels = dimx*dimy*dimz;
 // 	Array3f voxelFlags(dimx,dimy,dimz);
 // 	float * voxelPositions  = new float[3*Nvoxels*Nvoxels*Nvoxels];
 // 	initVoxels(voxelPositions,voxelFlags,Nvoxels);
 
-	Fluid_Solver fluid_solver(dimx,dimy,dimz,1.0f/32.0f,1.0f/30.0f,9.82f,1000,Nparticles);
+	Fluid_Solver fluid_solver(dimx,dimy,dimz,0.1f,1.0f/30.0f,9.82f,1.0f,Nparticles);
 	fluid_solver.init_box();
 
 	OpenGl_initViewer(600, 600,fluid_solver.grid);
@@ -105,9 +112,19 @@ int main(void)
 
 		if(step || play)
 		{
+//			stopwatch.startTimer();
 			fluid_solver.step_frame();
+// 			stopwatch.stopTimer();
+// 			std::cout << std::scientific;
+// 			std::cout << stopwatch.getElapsedTime() << "\n";
+// 			if(numframes >= 6)
+// 				avgtime += stopwatch.getElapsedTime();
+// 			numframes++;
+			
 		//	write_paricle_pos_binary(fluid_solver.particles);
 		}
+
+		
 
 		OpenGl_updateParticleLocation(fluid_solver.particles.pos, sizeof(vec3f)*fluid_solver.particles.currnp);
 		OpenGl_updateParticleVelocity(fluid_solver.particles.vel,sizeof(vec3f)*fluid_solver.particles.currnp);
@@ -121,6 +138,17 @@ int main(void)
 
 	}
 	
+
+	TerminateViewer();
+// 	std::cout << std::scientific;
+// 	std::cout << "Avg. time" << avgtime/(numframes-6) << "\n";
+// 	std::cout << "Press any key to quit...\n";
+// 	std::cin.get();*/
+
+	
+
+	
+
 	return 0;
 }
 

@@ -8,6 +8,7 @@
 #include <string>
 #include <iomanip>
 #include "Grid.h"
+#include <omp.h>
 
 struct VectorN
 {
@@ -195,6 +196,7 @@ void mtx_mult_vectorN(const Sparse_Matrix & A, const VectorN & d, VectorN & Adj,
 	//All boundary cells are SOLIDS
 	//Thus the boundary cell rows in the Poisson matrix are ZERO: No need to operate on them
 	Adj.zero();
+	#pragma omp parallel for
 	for(int k = 1; k < A.dimz-1; ++k)
 		for(int j = 1; j < A.dimy-1; ++j)
 			for (int i = 1; i < A.dimx-1; ++i)
@@ -220,48 +222,67 @@ void mtx_mult_vectorN(const Sparse_Matrix & A, const VectorN & d, VectorN & Adj,
 
 void vectorN_add(VectorN & lhs, const VectorN & rhs)
 {
-	double * rhsItr = rhs.data;
-	for(double *lhsitr = lhs.data; lhsitr < lhs.data + lhs.size; ++lhsitr)
-	{
-		*lhsitr = *lhsitr + *rhsItr++;
-	}
+// 	double * rhsItr = rhs.data;
+// 	for(double *lhsitr = lhs.data; lhsitr < lhs.data + lhs.size; ++lhsitr)
+// 	{
+// 		*lhsitr = *lhsitr + *rhsItr++;
+// 	}
+	#pragma omp parallel for
+	for(int i = 0; i < lhs.size; ++i)
+		lhs.data[i] += rhs.data[i];
 }
 
 void vectorN_add_scale(VectorN & lhs, const VectorN & rhs, double scale)
 {
-	double * rhsItr = rhs.data;
-	for(double *lhsitr = lhs.data; lhsitr < lhs.data + lhs.size; ++lhsitr)
-	{
-		*lhsitr += scale*(*rhsItr++);
-	}
+// 	double * rhsItr = rhs.data;
+// 	for(double *lhsitr = lhs.data; lhsitr < lhs.data + lhs.size; ++lhsitr)
+// 	{
+// 		*lhsitr += scale*(*rhsItr++);
+// 	}
+
+	#pragma omp parallel for
+	for(int i = 0; i < lhs.size; ++i)
+		lhs.data[i] += scale*rhs.data[i];
 }
 
 void vectorN_scale_add(VectorN & d, const VectorN & r, double beta)
 {
-	double * r_itr = r.data;
-	for(double *d_itr = d.data; d_itr < d.data + d.size; ++d_itr)
-	{
-		*d_itr = (*r_itr++) + beta * (*d_itr);
-	}
+// 	double * r_itr = r.data;
+// 	for(double *d_itr = d.data; d_itr < d.data + d.size; ++d_itr)
+// 	{
+// 		*d_itr = (*r_itr++) + beta * (*d_itr);
+// 	}
+
+	#pragma omp parallel for
+	for(int i = 0; i < d.size; ++i)
+		d.data[i] = r.data[i] + beta*d.data[i];
 }
 
 void vectorN_VectorN_sub(const VectorN & lhs, const VectorN & rhs, VectorN & res)
 {
-	double * resItr = res.data;
-	double * rhsItr = rhs.data;
-	for(double *lhsitr = lhs.data; lhsitr < lhs.data + lhs.size; ++lhsitr)
-	{
-		*resItr++ = *lhsitr - *rhsItr++;
-	}
+// 	double * resItr = res.data;
+// 	double * rhsItr = rhs.data;
+// 	for(double *lhsitr = lhs.data; lhsitr < lhs.data + lhs.size; ++lhsitr)
+// 	{
+// 		*resItr++ = *lhsitr - *rhsItr++;
+// 	}
+
+	#pragma omp parallel for
+	for(int i = 0; i < lhs.size; ++i)
+		res.data[i] = lhs.data[i] + rhs.data[i];
 }
 
 void vectorN_sub_scale(VectorN & r, const VectorN & Adj, double alpha)
 {
-	double * Adj_itr = Adj.data;
-	for(double *r_itr = r.data; r_itr < r.data + r.size; ++r_itr)
-	{
-		*r_itr -= alpha*(*Adj_itr++);
-	}
+// 	double * Adj_itr = Adj.data;
+// 	for(double *r_itr = r.data; r_itr < r.data + r.size; ++r_itr)
+// 	{
+// 		*r_itr -= alpha*(*Adj_itr++);
+// 	}
+
+	#pragma omp parallel for
+	for(int i = 0; i < r.size; ++i)
+		r.data[i] -= alpha*Adj.data[i];
 }
 
 double vectorN_dot(const VectorN & lhs, const VectorN & rhs)

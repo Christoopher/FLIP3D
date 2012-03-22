@@ -33,8 +33,11 @@ int nrOfParticles, nrOfVoxels;
 double t0 = 0;
 int frames = 0;
 Grid *grid;
-
+bool running = true;
+GLfloat edge = 3.0f;
 bool step = false, reset = false, showgrid = false, play = false;
+bool up_is_down;
+bool down_is_down;
 
 //----------------------------------------------------------------------------//
 // Shaders
@@ -52,6 +55,7 @@ GLuint particle_dimxLocation;
 GLuint particle_dimyLocation;
 GLuint particle_dimzLocation;
 GLuint particle_hLocation;
+GLuint particle_edgeLocation;
 
 //Shader for drawing instanced wireframe cubes
 //to display grid
@@ -178,8 +182,7 @@ void initShaders()
 	particle_VelocityLocation = glGetAttribLocation(particle_SP,"velocity");
 	particle_dimzLocation = glGetUniformLocationARB(particle_SP, "dimz");
 	particle_hLocation = glGetUniformLocationARB(particle_SP, "h");
-
-
+	particle_edgeLocation = glGetUniformLocationARB(particle_SP,"edge");
 	getOpenGLError();
 
 	instancedVoxel_SP = glCreateProgramObjectARB();
@@ -193,7 +196,7 @@ void initShaders()
 	instancedVoxel_VertexLocation = glGetAttribLocationARB(instancedVoxel_SP,"vertex");
 	instancedVoxel_PositionLocation = glGetAttribLocationARB(instancedVoxel_SP,"position");
 	instancedVoxel_FlagLocation = glGetAttribLocationARB(instancedVoxel_SP,"isFluid");
-
+	getOpenGLError();
 }
 
 //----------------------------------------------------------------------------//
@@ -212,7 +215,7 @@ void OpenGl_initParticles(void * vertices, void * velocities, size_t size, int n
 	glVertexAttribPointer(particle_VertexLocation, 3, GL_FLOAT, GL_FALSE, 0, 0);
 	glVertexAttribPointer(particle_VelocityLocation, 3, GL_FLOAT, GL_FALSE,0,(GLvoid *) size);
 	glEnableVertexAttribArray(particle_VertexLocation);
-	glEnableVertexAttribArray(particle_VelocityLocation);
+	glEnableVertexAttribArray(particle_VelocityLocation);	
 	glBindVertexArray(0);	
 }
 
@@ -328,7 +331,11 @@ void DrawParticles()
 	glUniformMatrix4fv(particle_ProjectionMtxLocation, 1, GL_FALSE, transformPipeline.GetProjectionMatrix());
 	glUniform1iv(particle_dimzLocation,1,&grid->Nz);
 	glUniform1fv(particle_hLocation,1,&grid->h);
-
+	if(up_is_down)
+		edge += 0.025;
+	if(down_is_down)
+		edge -= 0.025;
+	glUniform1fv(particle_edgeLocation,1,&edge);
 	glPointSize(4.0);
 	glDrawArrays(GL_POINTS,0,nrOfParticles);
 
@@ -432,6 +439,24 @@ void GLFWCALL KeyboardFunc( int key, int action )
 		zoom = 0;
 
 	}
+
+	if(key == GLFW_KEY_ESC)
+	{
+		running = false;
+	}
+
+	if (key == GLFW_KEY_UP && action == GLFW_PRESS)
+		up_is_down = true;
+	if(key == GLFW_KEY_UP && action == GLFW_RELEASE)
+		up_is_down = false;
+
+	if(key == GLFW_KEY_DOWN && action == GLFW_PRESS)
+		down_is_down = true;
+	if(key == GLFW_KEY_DOWN  && action == GLFW_RELEASE)
+		down_is_down = false;
+
+	
+
 }
 
 
@@ -521,7 +546,7 @@ void OpenGl_initViewer(int width_, int height_, Grid & grid_)
 	
 
 	//Move the camera back 5 units
-	cameraFrame.SetOrigin(0.0f,0.0f,5.0f);
+	cameraFrame.SetOrigin(0.0f,0.0f,140.0f);
 }
 
 

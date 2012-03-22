@@ -4,6 +4,7 @@
 #include "Sparse_Matrix.h"
 #include "Array3D.h"
 #include <cmath>
+#include <omp.h>
 
 struct Uncondioned_CG_Solver
 {

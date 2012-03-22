@@ -76,6 +76,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>../src/OpenGLRelated/include/GLTools/include/;../src/OpenGLRelated/include/glew/;../src/OpenGLRelated/include/glfw/;../src/OpenGLRelated/include/GLTools/src/;</AdditionalIncludeDirectories>
+      <OpenMPSupport>true</OpenMPSupport>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -102,9 +103,11 @@
     <ClInclude Include="..\src\Array3D.h" />
     <ClInclude Include="..\src\Fluid_Solver.h" />
     <ClInclude Include="..\src\Grid.h" />
+    <ClInclude Include="..\src\ObjLoader.h" />
     <ClInclude Include="..\src\OpenGLRelated\LoadShaderUtility.h" />
     <ClInclude Include="..\src\OpenGLViewer.h" />
     <ClInclude Include="..\src\Particles.h" />
+    <ClInclude Include="..\src\SolidMesh.h" />
     <ClInclude Include="..\src\Sparse_Matrix.h" />
     <ClInclude Include="..\src\SSEVector3.h" />
     <ClInclude Include="..\src\Timing\hr_time.h" />

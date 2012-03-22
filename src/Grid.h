@@ -8,6 +8,7 @@
 #include "Array3D.h"
 #include "Sparse_Matrix.h"
 #include "Unconditioned_CG_Solver.h"
+#include <omp.h>
 
 struct Grid
 {
@@ -147,35 +148,78 @@ struct Grid
 		//du,dv,dw holds the saved velocites
 		//u, v, w hols the new velocities
 		//Thus the change in velocity in e.g u is: u - du
-		float *pold,*pnew;
-		for(pnew = u.data, pold = du.data; pnew < u.data + u.size; ++pnew, ++pold)
-			*pold = *pnew - *pold;
-		for(pnew = v.data, pold = dv.data; pnew < v.data + v.size; ++pnew, ++pold)
-			*pold = *pnew - *pold;
-		for(pnew = w.data, pold = dw.data; pnew < w.data + w.size; ++pnew, ++pold)
-			*pold = *pnew - *pold;
+// 		float *pold,*pnew;
+// 		for(pnew = u.data, pold = du.data; pnew < u.data + u.size; ++pnew, ++pold)
+// 			*pold = *pnew - *pold;
+// 		for(pnew = v.data, pold = dv.data; pnew < v.data + v.size; ++pnew, ++pold)
+// 			*pold = *pnew - *pold;
+// 		for(pnew = w.data, pold = dw.data; pnew < w.data + w.size; ++pnew, ++pold)
+// 			*pold = *pnew - *pold;
+		#pragma omp parallel for
+		for(int k = 0; k < u.nz; ++k)
+			for(int j = 0; j < u.ny; ++j)
+				for(int i = 0; i < u.nx; ++i)
+				{
+					du(i,j,k) = u(i,j,k) - du(i,j,k);
+				}
+
+		#pragma omp parallel for
+		for(int k = 0; k < v.nz; ++k)
+			for(int j = 0; j < v.ny; ++j)
+				for(int i = 0; i < v.nx; ++i)
+				{
+					dv(i,j,k) = v(i,j,k) - dv(i,j,k);
+				}
+
+		#pragma omp parallel for
+		for(int k = 0; k < w.nz; ++k)
+			for(int j = 0; j < w.ny; ++j)
+				for(int i = 0; i < w.nx; ++i)
+					{
+						dw(i,j,k) = w(i,j,k) - dw(i,j,k);
+					}
+
+
+
 	}
 
 	void add_gravity(float dt)
 	{
 		float gdt = gravity*dt;
-		for (float * itr = v.data; itr < v.data + v.size; ++itr)
-			*itr -= gdt;
+		#pragma omp parallel for shared(gdt)
+		for(int k = 0; k < v.nz; ++k)
+			for(int j = 0; j < v.ny; ++j)
+				for(int i = 0; i < v.nx; ++i)
+				{
+					v(i,j,k) -= gdt;
+				}
+
+// 		for (float * itr = v.data; itr < v.data + v.size; ++itr)
+// 			*itr -= gdt;
 	}
 
 	void classify_voxel()
 	{
+		#pragma omp parallel for
 		for(int k = 0; k < Nz; ++k)
 			for(int j = 0; j < Ny; ++j)
 				marker(0,j,k) = marker(Nx-1,j,k) = SOLIDCELL; //Left, right wall cells
 
+		#pragma omp parallel for
 		for(int k = 0; k < Nz; ++k)
 			for(int i = 0; i < Nx; ++i)
 				marker(i,0,k) = marker(i,Ny-1,k) = SOLIDCELL; //floor, roof cells
 
+		#pragma omp parallel for
 		for(int j = 0; j < Ny; ++j)
 			for(int i = 0; i < Nx; ++i)
 				marker(i,j,0) = marker(i,j,Nz-1) = SOLIDCELL; //Front back wall cells
+
+
+		//solid.transfer_to_grid(this);
+
+		//for each solid
+
 
 	}
 	
@@ -184,6 +228,7 @@ struct Grid
 		//Project velocities to solid tangents
 
 		//Left, right wall u component
+		#pragma omp parallel for
 		for(int k = 0; k < u.nz; ++k)
 			for(int j = 0; j < u.ny; ++j)
 			{
@@ -195,6 +240,7 @@ struct Grid
 			}
 
 		//Floor roof v component
+		#pragma omp parallel for
 		for(int k = 0; k < v.nz; ++k)
 			for(int i = 0; i < v.nx; ++i)
 			{
@@ -207,6 +253,7 @@ struct Grid
 
 
 		//Front back wall w component
+		#pragma omp parallel for
 		for(int j = 0; j < w.ny; ++j)
 			for(int i = 0; i < w.nx; ++i)
 			{
@@ -215,6 +262,7 @@ struct Grid
 				if(w(i,j,w.nz-1) > 0.0f || w(i,j,w.nz-2) > 0.0f)
 					w(i,j,w.nz-1) = w(i,j,w.nz-2) = 0.0f; //Back wall
 			}
+
 
 		
 	}
@@ -312,8 +360,9 @@ void Grid::solve_pressure(int maxiterations, double tolerance)
 void Grid::project(float dt)
 {
 	float scale = dt / (rho * h);
-	int offset;
 	float val;
+
+	#pragma omp parallel for private(val) shared(scale)
 	for(int k = 0; k < Nz; ++k)
 		for(int j = 0; j < Ny; ++j)
 			for(int i = 0; i < Nx; ++i)
@@ -343,6 +392,20 @@ void Grid::project(float dt)
 // 					w(i,j,k) = 0.0f;
 // 					w(i,j,k+1) = 0.0f;
 // 				}
+				/*else if (marker(i,j,k) == SOLIDCELL)
+					{
+						val = scale * float(pressure(i,j,k));
+
+						u(i,j,k) -= val; u(i,j,k) *= 0.95;
+						u(i+1,j,k) += val; u(i+1,j,k) *= 0.95;
+
+						v(i,j,k) -= val; v(i,j,k)*= 0.95;
+						v(i,j+1,k) += val; v(i,j+1,k)*= 0.95;
+
+						w(i,j,k) -= val; w(i,j,k)*= 0.95;
+						w(i,j,k+1) += val; w(i,j,k+1)*= 0.95;
+
+					}*/
 			}
 }
 
@@ -353,7 +416,6 @@ void Grid::project(float dt)
 //----------------------------------------------------------------------------//
 void Grid::calc_divergence()
 {
-	int offset;
 	double scale = 1.0/h;
 
 	/*
@@ -403,6 +465,7 @@ void Grid::calc_divergence()
 		}
 	}*/
 
+	#pragma omp parallel for shared(scale)
 	for(int k = 0; k < Nz; ++k)
 		for(int j = 0; j < Ny; ++j)
 			for(int i = 0; i < Nx; ++i)
@@ -412,7 +475,7 @@ void Grid::calc_divergence()
 					//offset = i + Nx*(j + Ny*k); //Offset into rhs.data array
 
 					if(marker(i+1,j,k) == SOLIDCELL)		//If cell(i+1,j,k) remove u(i+1/2,j,k)
-						rhs(i,j,k) -= u(i,j,k);
+						rhs(i,j,k) -= u(i,j,k); // + u(i+1,j,k); //u(i+1,j,k) is set to usolid(i+1,j,k)
 					else if(marker(i-1,j,k) == SOLIDCELL)	//If cell(i-1,j,k) remove u(i-1/2,j,k)
 						rhs(i,j,k) += u(i+1,j,k);
 					else
@@ -445,6 +508,8 @@ void Grid::calc_divergence()
 void Grid::form_poisson(float dt)
 {
 	double scale = dt / (rho*h*h); // dt / (rho * dx^2) = (1/dx^2) * dt / rho
+
+	#pragma omp parallel for shared(scale)
 	for(int k = 1; k < Nz-1; ++k)
 		for(int j = 1; j < Ny-1; ++j)
 			for(int i = 1; i < Nx-1; ++i)

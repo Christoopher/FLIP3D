@@ -9,6 +9,7 @@
 #include "Vector3.h"
 #include "Grid.h"
 #include "Array3D.h"
+#include <omp.h>
 
 
 
@@ -50,7 +51,7 @@ struct Particles
 		currnp = 0;
 	}
 
-	
+
 };
 
 void move_particles_in_grid(Particles & particles, Grid & grid, float dt)
@@ -62,8 +63,8 @@ void move_particles_in_grid(Particles & particles, Grid & grid, float dt)
 	float xmax = (grid.Nx-1.001)*grid.h, xmin = 1.001*grid.h;
 	float ymax = (grid.Ny-1.001)*grid.h, ymin = 1.001*grid.h;
 	float zmax = (grid.Nz-1.001)*grid.h, zmin = 1.001*grid.h;
-	
 
+#pragma omp parallel for private(ufx, fx, vfy, fy, wfz, fz,ui, i, vj, j, wk, k,vel) shared(xmax,ymax,zmax)
 	for(int p = 0; p < particles.currnp; p++)
 	{
 		//Trilerp from grid
@@ -86,8 +87,6 @@ void move_particles_in_grid(Particles & particles, Grid & grid, float dt)
 		clamp(particles.pos[p][1], ymin,ymax);
 		clamp(particles.pos[p][2], zmin,zmax);
 
-
-
 	}
 }
 
@@ -97,6 +96,7 @@ void update_from_grid(Particles & particles, Grid & grid)
 {
 	int i, ui, j, vj, k, wk;
 	float fx, ufx, fy, vfy, fz, wfz;
+#pragma omp parallel for private(fx, ufx, fy, vfy, fz, wfz, i, ui, j, vj, k, wk)
 	for (int p = 0; p < particles.currnp; ++p) //Loop over all particles
 	{
 		grid.bary_x(particles.pos[p][0], ui, ufx);
@@ -112,9 +112,9 @@ void update_from_grid(Particles & particles, Grid & grid)
 		//particles.vel[p] = vec3f(grid.u.trilerp(ui,j,k,ufx,fy,fz), grid.v.trilerp(i,vj,k,fx,vfy,fz), grid.w.trilerp(i,j,wk,fx,fy,wfz)); 
 		//Flip
 		//particles.vel[p] += vec3f(grid.du.trilerp(ui,j,k,ufx,fy,fz), grid.dv.trilerp(i,vj,k,fx,vfy,fz), grid.dw.trilerp(i,j,wk,fx,fy,wfz));
-		
+
 		//PIC/FLIP
-		float alpha = 0.15f;
+		float alpha = 0.05f;
 		particles.vel[p] =  alpha*vec3f(grid.u.trilerp(ui,j,k,ufx,fy,fz), grid.v.trilerp(i,vj,k,fx,vfy,fz), grid.w.trilerp(i,j,wk,fx,fy,wfz))
 			+ (1.0f - alpha)*(particles.vel[p] + vec3f(grid.du.trilerp(ui,j,k,ufx,fy,fz), grid.dv.trilerp(i,vj,k,fx,vfy,fz), grid.dw.trilerp(i,j,wk,fx,fy,wfz)));
 
@@ -165,25 +165,26 @@ void transfer_to_grid(Particles & particles, Grid & grid)
 	int ui, vj, wk,i,j,k;
 	float fx, ufx, fy, vfy, fz, wfz;
 	int tmpi, tmpj, tmpk;
-	
+
 	particles.weightsumx.zero();
 	particles.weightsumy.zero();
 	particles.weightsumz.zero();
 
+#pragma omp parallel for private(ui, vj, wk,i,j,k,fx, ufx, fy, vfy, fz, wfz,tmpi, tmpj, tmpk)
 	for (int p = 0; p < particles.currnp; ++p) //Loop over all particles
 	{
 		grid.bary_x(particles.pos[p][0],ui,ufx); tmpi = ui;
 		grid.bary_y_centre(particles.pos[p][1],j,fy);
 		grid.bary_z_centre(particles.pos[p][2],k,fz);
 		accumulate(grid.u,particles.weightsumx,particles.vel[p][0],ui,j,k,ufx,fy,fz);
-		
+
 
 		grid.bary_x_centre(particles.pos[p][0],i,fx);
 		grid.bary_y(particles.pos[p][1],vj,vfy); tmpj = vj;
 		grid.bary_z_centre(particles.pos[p][2],k,fz);
 		accumulate(grid.v,particles.weightsumy,particles.vel[p][1],i,vj,k,fx,vfy,fz);
 
-		
+
 		grid.bary_x_centre(particles.pos[p][0],i,fx);
 		grid.bary_y_centre(particles.pos[p][1],j,fy);
 		grid.bary_z(particles.pos[p][2],wk,wfz); tmpk = wk;
@@ -192,8 +193,11 @@ void transfer_to_grid(Particles & particles, Grid & grid)
 		grid.marker(tmpi,tmpj,tmpk) = FLUIDCELL;
 
 	}
-	
+
+
 	//Scale u velocities with weightsumx
+
+	#pragma omp parallel for
 	for (int i = 0; i < grid.u.size; i++)
 	{
 		if(grid.u.data[i] != 0)
@@ -201,6 +205,7 @@ void transfer_to_grid(Particles & particles, Grid & grid)
 	}
 
 	//Scale v velocities with weightsumy
+	#pragma omp parallel for
 	for (int i = 0; i < grid.v.size; i++)
 	{
 		if(grid.v.data[i] != 0)
@@ -208,24 +213,13 @@ void transfer_to_grid(Particles & particles, Grid & grid)
 	}
 
 	//Scale w velocities with weightsumz
+	#pragma omp parallel for
 	for (int i = 0; i < grid.w.size; i++)
 	{
 		if(grid.w.data[i] != 0)
 			grid.w.data[i] /= particles.weightsumz.data[i];
 	}
 
-}
-
-//----------------------------------------------------------------------------//
-// Advect particles with stored velocity
-//----------------------------------------------------------------------------//
-void advect_particles(Particles & particles, float dt)
-{
-	vec3f * velItr = particles.vel;
-	for (vec3f * ppos = particles.pos; ppos < particles.pos + particles.currnp; ++ppos )
-	{
-		*ppos += (*velItr++)*dt; // position_n+1 = position_n + velocity * dt
-	}
 }
 
 //----------------------------------------------------------------------------//
@@ -236,34 +230,6 @@ inline void add_particle(Particles & particles, vec3f & pos, vec3f  & vel)
 	particles.pos[particles.currnp] = pos;
 	particles.vel[particles.currnp] = vel;
 	++particles.currnp;
-}
-
-//----------------------------------------------------------------------------//
-// Converts particle velocities into a linear array to use with e.g OpenGL
-//----------------------------------------------------------------------------//
-void get_velocity_larray(Particles & particles, float velArray[])
-{
-	float * itr = velArray;
-	for (vec3f * pvel = particles.vel; pvel < particles.vel + particles.currnp; ++pvel )
-	{
-		*itr++ = (*pvel)[0];
-		*itr++ = (*pvel)[1];
-		*itr++ = (*pvel)[2];		
-	}
-}
-
-//----------------------------------------------------------------------------//
-// Converts particle positions into a linear array to use with e.g OpenGL
-//----------------------------------------------------------------------------//
-void get_position_larray(Particles & particles, float posArray[])
-{
-	float * itr = posArray;
-	for (vec3f * ppos = particles.pos; ppos < particles.pos + particles.currnp; ++ppos )
-	{
-		*itr++ = (*ppos)[0]*32;
-		*itr++ = (*ppos)[1]*32;
-		*itr++ = (*ppos)[2]*32;
-	}
 }
 
 void write_paricle_pos_binary(Particles & particles)

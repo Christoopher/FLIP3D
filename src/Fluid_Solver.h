@@ -23,6 +23,8 @@ struct Fluid_Solver
 	{
 		grid.init(dimx,dimy,dimz,h,gravity, rho);
 		particles.init(max_particles,grid);
+
+		
 	}
 
 	void reset();
@@ -66,9 +68,11 @@ void Fluid_Solver::init_box()
 
 			}
 
-// 			for(float k = 1; k < 31; ++k)
-// 				for(float j = 1; j < 31; ++j)
-// 					for(float i = 59; i < 63; ++i)
+			
+
+// 			for(float k = 100; k < 200; ++k)
+// 				for(float j = 100; j < 300; ++j)
+// 					for(float i = 100; i < 200; ++i)
 // 					{
 // 						for (int kk = -1; kk < 1; ++kk)
 // 							for(int jj = -1; jj < 1; ++jj)
@@ -84,6 +88,25 @@ void Fluid_Solver::init_box()
 // 								}
 // 
 // 					}
+
+// 					for(float k = 1; k < 100; ++k)
+// 						for(float j = 21; j < 512; ++j)
+// 							for(float i = 1; i < 100; ++i)
+// 							{
+// 								for (int kk = -1; kk < 1; ++kk)
+// 									for(int jj = -1; jj < 1; ++jj)
+// 										for (int ii = -1; ii < 1; ++ii)
+// 										{
+// 											r1 = float(rand()) / RAND_MAX - 0.5; //[-0.5, 0.5]
+// 											r2 = float(rand()) / RAND_MAX - 0.5;
+// 											r3 = float(rand()) / RAND_MAX - 0.5;
+// 											pos[0] = (i+0.5f)*grid.h + (ii + 0.5f + 0.95*r1)*subh;
+// 											pos[1] = (j+0.5f)*grid.h + (jj + 0.5f + 0.95*r2)*subh;
+// 											pos[2] = (k+0.5f)*grid.h + (kk + 0.5f + 0.95*r3)*subh;
+// 											add_particle(particles,pos,vec3f(0.0f));
+// 										}
+// 
+// 							}
 
 
 // 			for(float k = 20; k < 30; ++k)
@@ -133,17 +156,21 @@ void Fluid_Solver::step(float dt)
 	transfer_to_grid(particles,grid);
 	grid.save_velocities();
 	grid.add_gravity(dt);
-	grid.apply_boundary_conditions();
+
+	
 	grid.classify_voxel();
-	grid.form_poisson(dt); //Funkar med hög sannolikhet
+	grid.apply_boundary_conditions();
+
+	//Pressure
+	grid.form_poisson(dt); 
 	grid.calc_divergence();
 	grid.solve_pressure(100,1e-6);
 	grid.project(dt);
 	//grid.extend_velocity();
+
 	grid.apply_boundary_conditions();
 	grid.get_velocity_update();
 	update_from_grid(particles,grid);
-	
 
 	
 }
