@@ -48,6 +48,8 @@ struct Grid
 		rhs.init(Nx_,Ny_,Nz_);
 		pressure.init(Nx_,Ny_,Nz_);
 		cg.init(Nx_,Ny_,Nz_);
+		
+		//testMesh.init("untitled.obj", vec3f(0,0,0) ,h);
 	}
 
 	void zero()
@@ -216,10 +218,8 @@ struct Grid
 				marker(i,j,0) = marker(i,j,Nz-1) = SOLIDCELL; //Front back wall cells
 
 
-		//solid.transfer_to_grid(this);
-
-		//for each solid
-
+		//solid.transfer_to_grid(this);	
+		
 
 	}
 	
@@ -262,6 +262,19 @@ struct Grid
 				if(w(i,j,w.nz-1) > 0.0f || w(i,j,w.nz-2) > 0.0f)
 					w(i,j,w.nz-1) = w(i,j,w.nz-2) = 0.0f; //Back wall
 			}
+
+		#pragma omp parallel for
+		for(int k = 1; k < Nz-1; ++k)
+			for(int j = 1; j < Ny-1; ++j)
+				for(int i = 1; i < Nx-1; ++i)
+				{
+					if(marker(i,j,k) == SOLIDCELL)
+					{
+						u(i,j,k) = u(i+1,j,k) = 0;
+						v(i,j,k) = v(i,j+1,k) = 0;
+						v(i,j,k) = v(i,j,k+1) = 0;
+					}
+				}
 
 
 		

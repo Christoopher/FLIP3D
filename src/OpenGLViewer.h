@@ -20,6 +20,7 @@
 #include "GLGeometryTransform.h"
 #include "Vector3.h"
 #include "Grid.h"
+#include "SolidMesh.h"
 
 //----------------------------------------------------------------------------//
 // Variables declaration
@@ -38,6 +39,7 @@ GLfloat edge = 3.0f;
 bool step = false, reset = false, showgrid = false, play = false;
 bool up_is_down;
 bool down_is_down;
+SolidMesh testMesh, testMesh2;
 
 //----------------------------------------------------------------------------//
 // Shaders
@@ -56,6 +58,13 @@ GLuint particle_dimyLocation;
 GLuint particle_dimzLocation;
 GLuint particle_hLocation;
 GLuint particle_edgeLocation;
+
+//Shader for drawing solid particles
+GLhandleARB solid_SP;
+GLhandleARB solid_VS;
+GLhandleARB solid_FS;
+GLuint solid_ModelViewMtxLocation;
+GLuint solid_ProjectionMtxLocation;
 
 //Shader for drawing instanced wireframe cubes
 //to display grid
@@ -185,6 +194,16 @@ void initShaders()
 	particle_edgeLocation = glGetUniformLocationARB(particle_SP,"edge");
 	getOpenGLError();
 
+	solid_SP = glCreateProgramObjectARB();
+	solid_VS = compileShader("solidParticle_vert.glsl", VERTEX_SHADER);
+	solid_FS = compileShader("solidParticle_frag.glsl",FRAGMENT_SHADER);
+	glAttachObjectARB(solid_SP,solid_VS);
+	glAttachObjectARB(solid_SP,solid_FS);
+	link_shaders(solid_SP);
+	solid_ModelViewMtxLocation = glGetUniformLocationARB(solid_SP,"modelViewMatrix");
+	solid_ProjectionMtxLocation = glGetUniformLocationARB(solid_SP,"projectionMatrix");
+	getOpenGLError();
+
 	instancedVoxel_SP = glCreateProgramObjectARB();
 	instancedVoxel_VS = compileShader("instancedVoxel_VertexShader.glsl", VERTEX_SHADER);
 	instancedVoxel_FS = compileShader("instancedVoxel_FragmentShader.glsl",FRAGMENT_SHADER);
@@ -224,7 +243,7 @@ void OpenGl_initParticles(void * vertices, void * velocities, size_t size, int n
 //----------------------------------------------------------------------------//
 void OpenGl_initWireframeCube(void * positions, void * flags, int nrOfVoxels_)
 {
-	nrOfVoxels = nrOfVoxels_*nrOfVoxels_*nrOfVoxels_;
+	nrOfVoxels = nrOfVoxels_;
 	size_t positionSize = 3*sizeof(float)*nrOfVoxels;
 	size_t flagSize = sizeof(float)*nrOfVoxels;
 
@@ -291,17 +310,17 @@ void OpenGl_updateParticleVelocity(void * velocity, size_t size)
 //----------------------------------------------------------------------------//
 // Update voxels locations and flags
 //----------------------------------------------------------------------------//
-void OpenGl_updateVoxels(void * positions,void * flags, int nrOfVoxels_)
+void OpenGl_updateVoxels(void * positions,Array3f & data, int nrOfVoxels_)
 {
-	nrOfVoxels = nrOfVoxels_*nrOfVoxels_*nrOfVoxels_;
-	size_t PosSize = sizeof(vec3f)*nrOfVoxels;
+	nrOfVoxels = nrOfVoxels_;
+	size_t PosSize = 3*sizeof(float)*nrOfVoxels;
 	size_t FlagSize = sizeof(float)*nrOfVoxels;
 	glBindBuffer(GL_ARRAY_BUFFER ,unitWFCube_flags_and_postions_VBO);
 	glBufferSubData(GL_ARRAY_BUFFER,0, PosSize,positions);
-	glBufferSubData(GL_ARRAY_BUFFER,PosSize, FlagSize,flags);
+	glBufferSubData(GL_ARRAY_BUFFER,PosSize, FlagSize,data.data);
 	glBindBuffer(GL_ARRAY_BUFFER,0);
-	getOpenGLError();
 	glVertexAttribPointer(instancedVoxel_FlagLocation, 1, GL_FLOAT, GL_FALSE,0, (GLvoid *)PosSize );
+	getOpenGLError();
 }
 
 //----------------------------------------------------------------------------//
@@ -313,7 +332,7 @@ void Resize()
 	glViewport(0, 0, winw, winh);
 
 	// Calculate the projection matrix and bind it to shader
-	viewFrustum.SetPerspective(45.0f, (GLfloat) winw / (GLfloat) winh, 1.0f, 1000.0f);	
+	viewFrustum.SetPerspective(45.0f, (GLfloat) winw / (GLfloat) winh, 1.0f, 10000000.0f);	
 
 	projectionMatrix.LoadMatrix(viewFrustum.GetProjectionMatrix());
 
@@ -356,6 +375,18 @@ void DrawVoxels()
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glDrawElementsInstanced(GL_LINES, 2*12, GL_UNSIGNED_INT, 0, nrOfVoxels);
 	glBindVertexArray(0);
+	glDisable(GL_BLEND);
+}
+
+void DrawSolidVoxels() 
+{
+	glUseProgram(solid_SP);
+	glUniformMatrix4fv(solid_ModelViewMtxLocation, 1, GL_FALSE, transformPipeline.GetModelViewMatrix());
+	glUniformMatrix4fv(solid_ProjectionMtxLocation, 1, GL_FALSE, transformPipeline.GetProjectionMatrix());
+	glPointSize(0.1);
+
+	testMesh.draw();
+	testMesh2.draw();
 }
 
 //----------------------------------------------------------------------------//
@@ -374,6 +405,8 @@ void OpenGl_drawAndUpdate(bool &running)
 
 	//Clear the buffer color and depth
 	glClearColor(0.5f,0.5f,0.5f,1.0f);
+	//glClearColor(0.0f,0.0f,0.0f,1.0f);
+	//glClearColor(1.0f,1.0f,1.0f,1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//Disables vsync
@@ -388,6 +421,10 @@ void OpenGl_drawAndUpdate(bool &running)
 	modelViewMatrix.Rotate(-rotDy,0.0f,1.0f,0.0f);
 
 	modelViewMatrix.Translate(-grid->Nx*0.5f,-grid->Ny*0.5f,-grid->Nz*0.5f);
+
+
+
+	DrawSolidVoxels();
 
 
 	DrawParticles();
@@ -546,7 +583,12 @@ void OpenGl_initViewer(int width_, int height_, Grid & grid_)
 	
 
 	//Move the camera back 5 units
-	cameraFrame.SetOrigin(0.0f,0.0f,140.0f);
+	cameraFrame.SetOrigin(0.0f,0.0f,150.0f);
+
+
+	testMesh.init("cube10.obj", vec3f(25,0,32) ,grid->h);
+	testMesh2.init("cube10.obj", vec3f(0,0,20) ,grid->h);
+
 }
 
 

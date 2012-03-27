@@ -120,6 +120,8 @@
     <None Include="..\src\Shaders\instancedVoxel_VertexShader.glsl" />
     <None Include="..\src\Shaders\particle_FragmentShader.glsl" />
     <None Include="..\src\Shaders\particle_VertexShader.glsl" />
+    <None Include="..\src\Shaders\solidParticle_frag.glsl" />
+    <None Include="..\src\Shaders\solidParticle_vert.glsl" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -10,6 +10,8 @@
 #include <time.h>
 #include "Unconditioned_CG_Solver.h"
 
+#include "OpenGLViewer.h"
+
 struct Fluid_Solver
 {
 	Particles particles;
@@ -50,7 +52,7 @@ void Fluid_Solver::init_box()
 	float subh = grid.h/2.0f;
 	vec3f pos(0);
 	for(float k = 1; k < 31; ++k)
-		for(float j = 1; j < 31; ++j)
+		for(float j = 12; j < 30; ++j)
 			for(float i = 1; i < 10; ++i)
 			{
 				for (int kk = -1; kk < 1; ++kk)
@@ -159,6 +161,10 @@ void Fluid_Solver::step(float dt)
 
 	
 	grid.classify_voxel();
+	testMesh.mesh_to_grid(grid);
+	testMesh2.mesh_to_grid(grid);
+
+
 	grid.apply_boundary_conditions();
 
 	//Pressure
@@ -174,16 +180,5 @@ void Fluid_Solver::step(float dt)
 
 	
 }
-
-
-
-
-
-
-
-
-
-
-
 
 #endif

@@ -82,10 +82,31 @@ void move_particles_in_grid(Particles & particles, Grid & grid, float dt)
 		//Move particle one step with forward euler
 		particles.pos[p] += dt*vel;
 
-		//Clamp pos to be inside of the solid walls
 		clamp(particles.pos[p][0], xmin,xmax);
 		clamp(particles.pos[p][1], ymin,ymax);
 		clamp(particles.pos[p][2], zmin,zmax);
+
+		//particles.pos[p] = newpos;
+		
+// 		if(grid.marker(floor(newpos[0]), floor(newpos[1]), floor(newpos[2])) == SOLIDCELL)
+// 		{
+// 			//Particles has enetered a solid voxel. clamp back to surface.
+// 
+// 			//Direction
+// 			//vec3f dir = newpos - particles.pos[p];
+// 			//float length = mag(dir);
+// 			newpos = particles.pos[p];// + 0.05*dir;
+// 
+// 		}
+// 		//else
+// 		particles.pos[p] = newpos;
+			
+		
+		//Clamp pos to be inside of the solid walls
+		//clamp(particles.pos[p][0], xmin,xmax);
+		//clamp(particles.pos[p][1], ymin,ymax);
+		//clamp(particles.pos[p][2], zmin,zmax);
+
 
 	}
 }

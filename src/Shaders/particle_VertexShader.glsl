@@ -16,5 +16,6 @@ void main(void)
 	vec3 pos = vertex;
 	pos.z = h*dimz - pos.z;
 	pos /= h;
+	//pos *= h/h;
 	gl_Position = projectionMatrix*modelViewMatrix*vec4(pos,1.0);
 }

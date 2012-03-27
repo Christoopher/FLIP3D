@@ -22,66 +22,30 @@ const int box = 10;
 const int Nparticles = 30000*perCell;
 const int dimx = 64, dimy = 32, dimz = 32;
 
-void initVoxels(float * voxelPositions, Array3f & voxelFlags, int k)
+void initVoxels(float * voxelPositions, int dx, int dy, int dz)
 {
+	//OBS Ordningen på loopen är viktig här
 	float * posItr = voxelPositions;
-
-	for (int x = 0; x < k; ++x) {
-		for (int y = 0; y < k; ++y) {
-			for (int z = 0; z < k; ++z) {
+	for (int z = 0; z < dz; ++z) {
+		for (int y = 0; y < dy; ++y) {
+			for (int x = 0; x < dx; ++x) {
 				*posItr++ = (float)x;
 				*posItr++ = (float)y;
-				*posItr++ = (float)z;	  
-				voxelFlags(x,y,z) = 1.0;
+				*posItr++ = dz - (float)z;	  
 			}
 		}
 	}
-
 }
-
-/*void TestSSE() 
-{
-	vec3f v1(1.0,2.0,1.0);
-	SSE::vec3f v2(1.0,2.0,1.0);
-
-	CStopWatch time;
-	INT64 iterations = 0, additions = 10000000;
-	float result;
-	time.startTimer();
-	while(iterations < additions)
-	{
-		result = mag2(v1);
-		iterations++;
-	}
-	time.stopTimer();
-	std::cout << time.getElapsedTime() << std::endl;
-	std::cout << result  << std::endl;
-
-	iterations = 0;
-	time.startTimer();
-	while(iterations < additions)
-	{
-		result = mag2(v2);
-		iterations++;
-	}
-	time.stopTimer();
-	std::cout << time.getElapsedTime() << std::endl;
-	std::cout << result  << std::endl;
-	std::cin.get();
-}*/
 
 void update_voxel_flags(Grid & grid, Array3f & flags)
 {
-	for(int i = 0; i < grid.marker.size; ++i)
-	{
 
-		flags.data[i] = grid.marker.data[i];
-
-		//if(grid.marker.data[i] == FLUIDCELL)
-		//	flags.data[i] = FLUIDCELL;
-		//else
-		//	flags.data[i] = 0;
-	}
+	for(int k = 0; k < grid.Nz; ++k)
+		for(int j = 0; j < grid.Ny; ++j)
+			for(int i = 0; i < grid.Nx; ++i)
+			{
+				flags(i,j,k) = (float)grid.marker(i,j,k);
+			}
 }
 
 CStopWatch stopwatch;
@@ -90,23 +54,33 @@ int numframes;
 double avgtime = 0;
 int main(void)
 {
-/*
-// 	int Nvoxels = dimx*dimy*dimz;
-// 	Array3f voxelFlags(dimx,dimy,dimz);
-// 	float * voxelPositions  = new float[3*Nvoxels*Nvoxels*Nvoxels];
-// 	initVoxels(voxelPositions,voxelFlags,Nvoxels);
-
-	Fluid_Solver fluid_solver(dimx,dimy,dimz,0.1f,1.0f/30.0f,9.82f,1.0f,Nparticles);
+	Fluid_Solver fluid_solver(dimx,dimy,dimz,1.0f,1.0f/30.0f,9.82f,1.0f,Nparticles);
 	fluid_solver.init_box();
 
 	OpenGl_initViewer(600, 600,fluid_solver.grid);
 	OpenGl_initParticles(fluid_solver.particles.pos, fluid_solver.particles.vel, sizeof(vec3f)*fluid_solver.particles.currnp, fluid_solver.particles.currnp);
-	//OpenGl_initWireframeCube(voxelPositions,voxelFlags.data,Nvoxels);
+	
+	
+	int Nvoxels = dimx*dimy*dimz;
+	Array3f voxelFlags(dimx,dimy,dimz);	
+	float * voxelPositions  = new float[3*dimx*dimy*dimz];
+	
+	initVoxels(voxelPositions,dimx,dimy,dimz);
+
+	OpenGl_initWireframeCube(voxelPositions,voxelFlags.data,Nvoxels);
+	update_voxel_flags(fluid_solver.grid,voxelFlags);
 	
 	while(running) {
 		if(reset)
 			fluid_solver.reset();
 		reset = false;
+
+		if(showgrid)
+		{
+			testMesh.mesh_to_grid(fluid_solver.grid);
+			update_voxel_flags(fluid_solver.grid,voxelFlags);
+			OpenGl_updateVoxels(voxelPositions, voxelFlags, Nvoxels);
+		}
 		
 		OpenGl_drawAndUpdate(running);
 
@@ -129,12 +103,7 @@ int main(void)
 		OpenGl_updateParticleLocation(fluid_solver.particles.pos, sizeof(vec3f)*fluid_solver.particles.currnp);
 		OpenGl_updateParticleVelocity(fluid_solver.particles.vel,sizeof(vec3f)*fluid_solver.particles.currnp);
 		
-// 		if(showgrid)
-// 		{
-// 			fluid_solver.grid.classify_voxel();
-// 			update_voxel_flags(fluid_solver.grid,voxelFlags);
-// 			OpenGl_updateVoxels(voxelPositions, voxelFlags.data, Nvoxels);
-// 		}
+		
 
 	}
 	
@@ -143,7 +112,7 @@ int main(void)
 // 	std::cout << std::scientific;
 // 	std::cout << "Avg. time" << avgtime/(numframes-6) << "\n";
 // 	std::cout << "Press any key to quit...\n";
-// 	std::cin.get();*/
+// 	std::cin.get();
 
 	
 

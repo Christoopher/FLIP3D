@@ -15,7 +15,17 @@ struct vec3f
 	
 	vec3f(float x, float y, float z) { v[0] = x; v[1] = y; v[2] = z; }
 	
-	vec3f(vec3f & source) { v[0] = source.v[0]; v[1] = source.v[1]; v[2] = source.v[2]; }
+	vec3f(const vec3f & source) { v[0] = source.v[0]; v[1] = source.v[1]; v[2] = source.v[2]; }
+
+	vec3f & operator=(const vec3f & source) 
+	{ 
+		if(this == &source) 
+			return *this;  
+		
+		v[0] = source.v[0]; v[1] = source.v[1]; v[2] = source.v[2]; 
+		
+		return *this; 
+	}
 
 	float & operator[](int index) {return v[index]; }
 
