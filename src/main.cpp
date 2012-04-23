@@ -2,6 +2,7 @@
 #include <limits>
 #include <stdio.h>
 #include <iostream>
+#include <vector>
 
 #include "OpenGLViewer.h"
 #include "Vector3.h"
@@ -15,6 +16,9 @@
 #include "Unconditioned_CG_Solver.h"
 
 #include "ObjLoader.h"
+
+#include "MarchingCubes/MarchingCubes.h"
+
 
 
 const int perCell = 8;
@@ -48,6 +52,29 @@ void update_voxel_flags(Grid & grid, Array3f & flags)
 			}
 }
 
+
+
+void initLevelset(int dim, float r)
+{
+	srand(int(time(NULL)));
+	//levelset.resize(dim*dim*dim);
+	levelset = new mp4Vector[dim*dim*dim];
+	float center = dim/2.0f + 0.5f;
+	for(int k = 0; k < dim; ++k)
+		for(int j = 0; j < dim; ++j)
+			for(int i = 0; i < dim; ++i)
+			{
+				float dx = (center - i);
+				float dy = (center - j);
+				float dz = (center - k);
+				float dist = sqrtf( dx*dx + dy*dy + dz*dz )/dim;
+				mp4Vector vert(10*float(i-center)/dim, 10*float(j-center)/dim,10*float(k-center)/dim,0);
+				vert.val = r-dist;
+				int off = i + dim*(j + dim *k);
+				levelset[off] = vert; //Negative on the inside	
+			}
+}
+
 CStopWatch stopwatch;
 
 int numframes;
@@ -69,8 +96,23 @@ int main(void)
 
 	OpenGl_initWireframeCube(voxelPositions,voxelFlags.data,Nvoxels);
 	update_voxel_flags(fluid_solver.grid,voxelFlags);
+
+	initLevelset(128,0.3);
+
+	levelset = new mp4Vector[dimx*dimy*dimz];
+	for(int k = 0; k < dimz; ++k)
+		for(int j = 0; j < dimy; ++j)
+			for(int i = 0; i < dimx; ++i)
+			{
+				levelset[(i + dimx*(j + dimy *k))] = mp4Vector(i,j,k,1000.0);
+			}
+
+	//tri = MarchingCubes(128,128,128,0,levelset,LinearInterp,numOfTriangles);
+	
 	
 	while(running) {
+
+		
 		if(reset)
 			fluid_solver.reset();
 		reset = false;
@@ -82,11 +124,21 @@ int main(void)
 			OpenGl_updateVoxels(voxelPositions, voxelFlags, Nvoxels);
 		}
 		
-		OpenGl_drawAndUpdate(running);
+		
 
+		OpenGl_drawAndUpdate(running);
+	
+		
 		if(step || play)
 		{
+			
 //			stopwatch.startTimer();
+			for(int k = 0; k < dimz; ++k)
+				for(int j = 0; j < dimy; ++j)
+					for(int i = 0; i < dimx; ++i)
+					{
+						levelset[(i + dimx*(j + dimy *k))] = mp4Vector(i,j,k,1000.0);
+					}
 			fluid_solver.step_frame();
 // 			stopwatch.stopTimer();
 // 			std::cout << std::scientific;
@@ -96,6 +148,8 @@ int main(void)
 // 			numframes++;
 			
 		//	write_paricle_pos_binary(fluid_solver.particles);
+			delete [] tri;		
+			tri = MarchingCubes(dimx,dimy,dimz,0,levelset,LinearInterp,numOfTriangles);
 		}
 
 		
@@ -117,7 +171,7 @@ int main(void)
 	
 
 	
-
+	delete [] levelset;
 	return 0;
 }
 

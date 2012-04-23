@@ -19,6 +19,12 @@
     <Filter Include="Header Files\Timer">
       <UniqueIdentifier>{75d9ba8d-46d4-4735-9c62-e2fce703c9e2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\MarchingCubes">
+      <UniqueIdentifier>{ac754acd-49fe-4a67-8758-7a6876232c88}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\MarchingCubes">
+      <UniqueIdentifier>{c418f9ce-71ae-4b1f-a024-a922ecaaf731}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp">
@@ -29,6 +35,12 @@
     </ClCompile>
     <ClCompile Include="..\src\Timing\hr_time.cpp">
       <Filter>Header Files\Timer</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\MarchingCubes\MarchingCubes.cpp">
+      <Filter>Source Files\MarchingCubes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\MarchingCubes\mpVector.cpp">
+      <Filter>Source Files\MarchingCubes</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -74,6 +86,15 @@
     <ClInclude Include="..\src\SolidMesh.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\MarchingCubes\MarchingCubes.h">
+      <Filter>Header Files\MarchingCubes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\MarchingCubes\MCTable.h">
+      <Filter>Header Files\MarchingCubes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\MarchingCubes\mpVector.h">
+      <Filter>Header Files\MarchingCubes</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\src\Shaders\particle_VertexShader.glsl">
@@ -92,6 +113,12 @@
       <Filter>Resource Files\Shaders</Filter>
     </None>
     <None Include="..\src\Shaders\solidParticle_vert.glsl">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="..\src\Shaders\mesh_frag.glsl">
+      <Filter>Resource Files\Shaders</Filter>
+    </None>
+    <None Include="..\src\Shaders\mesh_vert.glsl">
       <Filter>Resource Files\Shaders</Filter>
     </None>
   </ItemGroup>

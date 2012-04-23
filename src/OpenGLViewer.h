@@ -1,6 +1,20 @@
 #ifndef _OPENGL_VIEWER_
 #define _OPENGL_VIEWER_
 
+#include "MarchingCubes/MarchingCubes.h"
+
+
+// TAAAAAAAAAAA BOOOORT
+//////////////////////////////////////////////////////////////////////////
+
+TRIANGLE * tri;
+int numOfTriangles;
+mp4Vector * levelset;
+
+//////////////////////////////////////////////////////////////////////////
+
+
+
 #include "LoadShaderUtility.h"
 
 //C/C++ headers
@@ -65,6 +79,15 @@ GLhandleARB solid_VS;
 GLhandleARB solid_FS;
 GLuint solid_ModelViewMtxLocation;
 GLuint solid_ProjectionMtxLocation;
+
+//Shader for drawing surface mesh
+GLhandleARB mesh_SP;
+GLhandleARB mesh_VS;
+GLhandleARB mesh_FS;
+GLuint mesh_ModelViewMtxLocation;
+GLuint mesh_ProjectionMtxLocation;
+GLuint mesh_NormalMtxLocation;
+
 
 //Shader for drawing instanced wireframe cubes
 //to display grid
@@ -202,6 +225,17 @@ void initShaders()
 	link_shaders(solid_SP);
 	solid_ModelViewMtxLocation = glGetUniformLocationARB(solid_SP,"modelViewMatrix");
 	solid_ProjectionMtxLocation = glGetUniformLocationARB(solid_SP,"projectionMatrix");
+	getOpenGLError();
+
+	mesh_SP = glCreateProgramObjectARB();
+	mesh_VS = compileShader("mesh_vert.glsl", VERTEX_SHADER);
+	mesh_FS = compileShader("mesh_frag.glsl",FRAGMENT_SHADER);
+	glAttachObjectARB(mesh_SP,mesh_VS);
+	glAttachObjectARB(mesh_SP,mesh_FS);
+	link_shaders(mesh_SP);
+	mesh_ModelViewMtxLocation = glGetUniformLocationARB(mesh_SP,"modelViewMatrix");
+	mesh_ProjectionMtxLocation = glGetUniformLocationARB(mesh_SP,"projectionMatrix");
+	mesh_NormalMtxLocation = glGetUniformLocationARB(mesh_SP,"normalMatrix");
 	getOpenGLError();
 
 	instancedVoxel_SP = glCreateProgramObjectARB();
@@ -389,11 +423,44 @@ void DrawSolidVoxels()
 	testMesh2.draw();
 }
 
+
+
+void DrawMesh()
+{
+	glUseProgram(mesh_SP);
+	
+	glUniformMatrix3fv(mesh_NormalMtxLocation, 1, GL_FALSE, transformPipeline.GetNormalMatrix());
+	glUniformMatrix4fv(mesh_ModelViewMtxLocation, 1, GL_FALSE, transformPipeline.GetModelViewMatrix());
+	glUniformMatrix4fv(mesh_ProjectionMtxLocation, 1, GL_FALSE, transformPipeline.GetProjectionMatrix());
+
+	//KOM IHÅG ATT SÄTTA lightpos
+	
+
+	float lightpos0[4]={10.0f, 0.0f, 0.0f, 1.0f};  
+
+	glLightfv(GL_LIGHT0, GL_POSITION, lightpos0);
+
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+
+	glBegin(GL_TRIANGLES);
+	for(int i=0; i < numOfTriangles; i++){
+		glNormal3f(tri[i].norm.x, tri[i].norm.y, tri[i].norm.z);
+		for(int j=0; j < 3; j++)	
+			glVertex3f(tri[i].p[j].x,tri[i].p[j].y,tri[i].p[j].z);
+	}
+	glEnd();
+}
+
 //----------------------------------------------------------------------------//
 // Draws all content
 //----------------------------------------------------------------------------//
 void OpenGl_drawAndUpdate(bool &running)
 {
+	glEnable(GL_CULL_FACE);
+	glDepthFunc(GL_LESS);
+	glEnable(GL_DEPTH_TEST);
+	
 	running = !glfwGetKey( GLFW_KEY_ESC ) &&
 		glfwGetWindowParam( GLFW_OPENED );
 
@@ -424,10 +491,13 @@ void OpenGl_drawAndUpdate(bool &running)
 
 
 
-	DrawSolidVoxels();
+	//DrawSolidVoxels();
+	//DrawParticles();
+	DrawMesh();
+	
 
 
-	DrawParticles();
+	
 
 	if(showgrid)
 		DrawVoxels();
@@ -578,12 +648,14 @@ void OpenGl_initViewer(int width_, int height_, Grid & grid_)
 	initShaders();
 
 	glEnable(GL_CULL_FACE);
+	glDepthFunc(GL_LESS);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_POINT_SMOOTH);
+	glCullFace(GL_FRONT);
 	
 
 	//Move the camera back 5 units
-	cameraFrame.SetOrigin(0.0f,0.0f,150.0f);
+	cameraFrame.SetOrigin(0.0f,0.0f,110.0f);
 
 
 	testMesh.init("cube10.obj", vec3f(25,0,32) ,grid->h);

@@ -11,7 +11,7 @@
 #include "Array3D.h"
 #include <omp.h>
 
-
+#include "OpenGLViewer.h"
 
 struct Particles
 {
@@ -133,7 +133,7 @@ void update_from_grid(Particles & particles, Grid & grid)
 		//particles.vel[p] = vec3f(grid.u.trilerp(ui,j,k,ufx,fy,fz), grid.v.trilerp(i,vj,k,fx,vfy,fz), grid.w.trilerp(i,j,wk,fx,fy,wfz)); 
 		//Flip
 		//particles.vel[p] += vec3f(grid.du.trilerp(ui,j,k,ufx,fy,fz), grid.dv.trilerp(i,vj,k,fx,vfy,fz), grid.dw.trilerp(i,j,wk,fx,fy,wfz));
-
+		
 		//PIC/FLIP
 		float alpha = 0.05f;
 		particles.vel[p] =  alpha*vec3f(grid.u.trilerp(ui,j,k,ufx,fy,fz), grid.v.trilerp(i,vj,k,fx,vfy,fz), grid.w.trilerp(i,j,wk,fx,fy,wfz))
@@ -212,6 +212,8 @@ void transfer_to_grid(Particles & particles, Grid & grid)
 		accumulate(grid.w,particles.weightsumz,particles.vel[p][2],i,j,wk,fx,fy,wfz);
 
 		grid.marker(tmpi,tmpj,tmpk) = FLUIDCELL;
+		mp4Vector val(tmpi,tmpj,tmpk,-1.0);
+		levelset[(i + grid.Nx*(j + grid.Ny*k))] = val;
 
 	}
 
