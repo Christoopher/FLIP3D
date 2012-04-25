@@ -18,5 +18,6 @@ void main(void)
 	vLightDir = normalize(lightpos - vPosition3);
 
 	vec3 pos = gl_Vertex.xyz;
+	pos.z = 16.0 - pos.z;
 	gl_Position = projectionMatrix*modelViewMatrix*vec4(pos,1.0);
 }

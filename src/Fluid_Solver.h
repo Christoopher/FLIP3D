@@ -12,6 +12,9 @@
 
 #include "OpenGLViewer.h"
 
+#include "AniMesher.h"
+#include "MarchingCubes/MarchingCubes.h"
+
 struct Fluid_Solver
 {
 	Particles particles;
@@ -25,7 +28,7 @@ struct Fluid_Solver
 	{
 		grid.init(dimx,dimy,dimz,h,gravity, rho);
 		particles.init(max_particles,grid);
-
+		tri = new TRIANGLE[1];
 		
 	}
 
@@ -36,7 +39,18 @@ struct Fluid_Solver
 
 	void init_box();
 
+
+	void createSurface();
+	TRIANGLE * tri;
+	int nrofTriangles;
 };
+
+
+
+void Fluid_Solver::createSurface()
+{
+	mesh(particles,grid,1,nrofTriangles,tri);
+}
 
 void Fluid_Solver::reset()
 {
@@ -51,9 +65,9 @@ void Fluid_Solver::init_box()
 	float r1,r2,r3;
 	float subh = grid.h/2.0f;
 	vec3f pos(0);
-	for(float k = 1; k < 31; ++k)
-		for(float j = 12; j < 30; ++j)
-			for(float i = 1; i < 10; ++i)
+	for(float k = 5; k < 10; ++k)
+		for(float j = 5; j < 10; ++j)
+			for(float i = 5; i < 10; ++i)
 			{
 				for (int kk = -1; kk < 1; ++kk)
 					for(int jj = -1; jj < 1; ++jj)
@@ -161,8 +175,8 @@ void Fluid_Solver::step(float dt)
 
 	
 	grid.classify_voxel();
-	testMesh.mesh_to_grid(grid);
-	testMesh2.mesh_to_grid(grid);
+	//testMesh.mesh_to_grid(grid);
+	//testMesh2.mesh_to_grid(grid);
 
 
 	grid.apply_boundary_conditions();

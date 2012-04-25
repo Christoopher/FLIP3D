@@ -24,7 +24,7 @@
 const int perCell = 8;
 const int box = 10;
 const int Nparticles = 30000*perCell;
-const int dimx = 64, dimy = 32, dimz = 32;
+const int dimx = 16, dimy = 16, dimz = 16;
 
 void initVoxels(float * voxelPositions, int dx, int dy, int dz)
 {
@@ -53,7 +53,7 @@ void update_voxel_flags(Grid & grid, Array3f & flags)
 }
 
 
-
+/*
 void initLevelset(int dim, float r)
 {
 	srand(int(time(NULL)));
@@ -74,6 +74,7 @@ void initLevelset(int dim, float r)
 				levelset[off] = vert; //Negative on the inside	
 			}
 }
+*/
 
 CStopWatch stopwatch;
 
@@ -97,16 +98,16 @@ int main(void)
 	OpenGl_initWireframeCube(voxelPositions,voxelFlags.data,Nvoxels);
 	update_voxel_flags(fluid_solver.grid,voxelFlags);
 
-	initLevelset(128,0.3);
+	//initLevelset(128,0.3);
 
-	levelset = new mp4Vector[dimx*dimy*dimz];
-	for(int k = 0; k < dimz; ++k)
+	//levelset = new mp4Vector[dimx*dimy*dimz];
+	/*for(int k = 0; k < dimz; ++k)
 		for(int j = 0; j < dimy; ++j)
 			for(int i = 0; i < dimx; ++i)
 			{
 				levelset[(i + dimx*(j + dimy *k))] = mp4Vector(i,j,k,1000.0);
 			}
-
+	*/
 	//tri = MarchingCubes(128,128,128,0,levelset,LinearInterp,numOfTriangles);
 	
 	
@@ -133,12 +134,6 @@ int main(void)
 		{
 			
 //			stopwatch.startTimer();
-			for(int k = 0; k < dimz; ++k)
-				for(int j = 0; j < dimy; ++j)
-					for(int i = 0; i < dimx; ++i)
-					{
-						levelset[(i + dimx*(j + dimy *k))] = mp4Vector(i,j,k,1000.0);
-					}
 			fluid_solver.step_frame();
 // 			stopwatch.stopTimer();
 // 			std::cout << std::scientific;
@@ -148,8 +143,15 @@ int main(void)
 // 			numframes++;
 			
 		//	write_paricle_pos_binary(fluid_solver.particles);
-			delete [] tri;		
-			tri = MarchingCubes(dimx,dimy,dimz,0,levelset,LinearInterp,numOfTriangles);
+			//delete [] tri;		
+			//tri = MarchingCubes(dimx,dimy,dimz,0,levelset,LinearInterp,numOfTriangles);
+
+			fluid_solver.createSurface();
+
+			openGl_setMesh(fluid_solver.tri,fluid_solver.nrofTriangles);
+
+
+			//Nu fiins fluid_solver.triangles, fluid_solver.nroftriangles
 		}
 
 		
@@ -171,7 +173,7 @@ int main(void)
 	
 
 	
-	delete [] levelset;
+	
 	return 0;
 }
 

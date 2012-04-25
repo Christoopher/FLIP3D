@@ -6,7 +6,7 @@ varying vec3 vLightDir;
 void main( void )
 {
 	vec3 L = vLightDir;
-	vec3 N = -normalize(v_N);
+	vec3 N = normalize(v_N);
 	vec3 R = normalize(2.0*N*dot(N,L)-L);
 	vec3 color = vec3(0.1,0.1,0.5);
 	float amb = 0.1;

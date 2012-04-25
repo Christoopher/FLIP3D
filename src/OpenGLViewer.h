@@ -4,16 +4,6 @@
 #include "MarchingCubes/MarchingCubes.h"
 
 
-// TAAAAAAAAAAA BOOOORT
-//////////////////////////////////////////////////////////////////////////
-
-TRIANGLE * tri;
-int numOfTriangles;
-mp4Vector * levelset;
-
-//////////////////////////////////////////////////////////////////////////
-
-
 
 #include "LoadShaderUtility.h"
 
@@ -35,6 +25,19 @@ mp4Vector * levelset;
 #include "Vector3.h"
 #include "Grid.h"
 #include "SolidMesh.h"
+
+
+
+TRIANGLE * meshTriangles;
+int numOfTriangles;
+
+
+void openGl_setMesh(TRIANGLE *& tri, int n)
+{
+	meshTriangles = tri;
+	numOfTriangles = n;
+}
+
 
 //----------------------------------------------------------------------------//
 // Variables declaration
@@ -445,19 +448,21 @@ void DrawMesh()
 
 	glBegin(GL_TRIANGLES);
 	for(int i=0; i < numOfTriangles; i++){
-		glNormal3f(tri[i].norm.x, tri[i].norm.y, tri[i].norm.z);
+		glNormal3f(meshTriangles[i].norm.x, meshTriangles[i].norm.y, meshTriangles[i].norm.z);
 		for(int j=0; j < 3; j++)	
-			glVertex3f(tri[i].p[j].x,tri[i].p[j].y,tri[i].p[j].z);
+			glVertex3f(meshTriangles[i].p[j].x,meshTriangles[i].p[j].y,meshTriangles[i].p[j].z);
 	}
 	glEnd();
 }
 
+
 //----------------------------------------------------------------------------//
 // Draws all content
 //----------------------------------------------------------------------------//
+
 void OpenGl_drawAndUpdate(bool &running)
 {
-	glEnable(GL_CULL_FACE);
+	//glEnable(GL_CULL_FACE);
 	glDepthFunc(GL_LESS);
 	glEnable(GL_DEPTH_TEST);
 	
@@ -489,14 +494,10 @@ void OpenGl_drawAndUpdate(bool &running)
 
 	modelViewMatrix.Translate(-grid->Nx*0.5f,-grid->Ny*0.5f,-grid->Nz*0.5f);
 
-
-
+	
 	//DrawSolidVoxels();
 	//DrawParticles();
 	DrawMesh();
-	
-
-
 	
 
 	if(showgrid)
@@ -647,11 +648,11 @@ void OpenGl_initViewer(int width_, int height_, Grid & grid_)
 
 	initShaders();
 
-	glEnable(GL_CULL_FACE);
+	glDisable(GL_CULL_FACE);
 	glDepthFunc(GL_LESS);
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_POINT_SMOOTH);
-	glCullFace(GL_FRONT);
+	//glCullFace(GL_FRONT);
 	
 
 	//Move the camera back 5 units

@@ -42,12 +42,16 @@
     <OutDir>$(SolutionDir)..\bin\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)\intermediate\$(Configuration)\</IntDir>
     <IncludePath>../src/Timing/;../src/OpenGLRelated/;../src/;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
+    <SourcePath>$(ALGLIB)/src;$(VCInstallDir)atlmfc\src\mfc;$(VCInstallDir)atlmfc\src\mfcm;$(VCInstallDir)atlmfc\src\atl;$(VCInstallDir)crt\src;</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)..\bin\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)\intermediate\$(Configuration)\</IntDir>
-    <IncludePath>../src/Timing/;../src/OpenGLRelated/;../src/;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
+    <IncludePath>$(ALGLIB)/src;../src/Timing/;../src/OpenGLRelated/;../src/;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
+    <SourcePath>$(ALGLIB)/src;$(VCInstallDir)atlmfc\src\mfc;$(VCInstallDir)atlmfc\src\mfcm;$(VCInstallDir)atlmfc\src\atl;$(VCInstallDir)crt\src;</SourcePath>
+    <ReferencePath>$(ALGLIB)/src;$(VCInstallDir)atlmfc\lib;$(VCInstallDir)lib</ReferencePath>
+    <LibraryPath>$(ALGLIB)/src;$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -56,7 +60,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../src/OpenGLRelated/include/GLTools/include/;../src/OpenGLRelated/include/glew/;../src/OpenGLRelated/include/glfw/;../src/OpenGLRelated/include/GLTools/src/;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ALGLIB)/src;../src/OpenGLRelated/include/GLTools/include/;../src/OpenGLRelated/include/glew/;../src/OpenGLRelated/include/glfw/;../src/OpenGLRelated/include/GLTools/src/;</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
@@ -75,7 +79,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>../src/OpenGLRelated/include/GLTools/include/;../src/OpenGLRelated/include/glew/;../src/OpenGLRelated/include/glfw/;../src/OpenGLRelated/include/GLTools/src/;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ALGLIB)/src;../src/OpenGLRelated/include/GLTools/include/;../src/OpenGLRelated/include/glew/;../src/OpenGLRelated/include/glfw/;../src/OpenGLRelated/include/GLTools/src/;</AdditionalIncludeDirectories>
       <OpenMPSupport>true</OpenMPSupport>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
@@ -89,6 +93,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\src\ALGLIB\alglibinternal.cpp" />
+    <ClCompile Include="..\src\ALGLIB\alglibmisc.cpp" />
+    <ClCompile Include="..\src\ALGLIB\ap.cpp" />
+    <ClCompile Include="..\src\ALGLIB\dataanalysis.cpp" />
+    <ClCompile Include="..\src\ALGLIB\diffequations.cpp" />
+    <ClCompile Include="..\src\ALGLIB\fasttransforms.cpp" />
+    <ClCompile Include="..\src\ALGLIB\integration.cpp" />
+    <ClCompile Include="..\src\ALGLIB\interpolation.cpp" />
+    <ClCompile Include="..\src\ALGLIB\linalg.cpp" />
+    <ClCompile Include="..\src\ALGLIB\optimization.cpp" />
+    <ClCompile Include="..\src\ALGLIB\solvers.cpp" />
+    <ClCompile Include="..\src\ALGLIB\specialfunctions.cpp" />
+    <ClCompile Include="..\src\ALGLIB\statistics.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\MarchingCubes\MarchingCubes.cpp" />
     <ClCompile Include="..\src\MarchingCubes\mpVector.cpp" />
@@ -103,6 +120,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\src\AniMesher.h" />
     <ClInclude Include="..\src\Array3D.h" />
     <ClInclude Include="..\src\Fluid_Solver.h" />
     <ClInclude Include="..\src\Grid.h" />

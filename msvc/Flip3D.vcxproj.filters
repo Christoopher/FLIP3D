@@ -25,6 +25,9 @@
     <Filter Include="Source Files\MarchingCubes">
       <UniqueIdentifier>{c418f9ce-71ae-4b1f-a024-a922ecaaf731}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\ALGLIB">
+      <UniqueIdentifier>{6dd6a127-a980-4ed3-8a7c-ba166ad482ab}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\main.cpp">
@@ -41,6 +44,45 @@
     </ClCompile>
     <ClCompile Include="..\src\MarchingCubes\mpVector.cpp">
       <Filter>Source Files\MarchingCubes</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ALGLIB\alglibinternal.cpp">
+      <Filter>Source Files\ALGLIB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ALGLIB\alglibmisc.cpp">
+      <Filter>Source Files\ALGLIB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ALGLIB\ap.cpp">
+      <Filter>Source Files\ALGLIB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ALGLIB\dataanalysis.cpp">
+      <Filter>Source Files\ALGLIB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ALGLIB\diffequations.cpp">
+      <Filter>Source Files\ALGLIB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ALGLIB\fasttransforms.cpp">
+      <Filter>Source Files\ALGLIB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ALGLIB\integration.cpp">
+      <Filter>Source Files\ALGLIB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ALGLIB\interpolation.cpp">
+      <Filter>Source Files\ALGLIB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ALGLIB\linalg.cpp">
+      <Filter>Source Files\ALGLIB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ALGLIB\optimization.cpp">
+      <Filter>Source Files\ALGLIB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ALGLIB\solvers.cpp">
+      <Filter>Source Files\ALGLIB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ALGLIB\specialfunctions.cpp">
+      <Filter>Source Files\ALGLIB</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ALGLIB\statistics.cpp">
+      <Filter>Source Files\ALGLIB</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -94,6 +136,9 @@
     </ClInclude>
     <ClInclude Include="..\src\MarchingCubes\mpVector.h">
       <Filter>Header Files\MarchingCubes</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\AniMesher.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -212,8 +212,8 @@ void transfer_to_grid(Particles & particles, Grid & grid)
 		accumulate(grid.w,particles.weightsumz,particles.vel[p][2],i,j,wk,fx,fy,wfz);
 
 		grid.marker(tmpi,tmpj,tmpk) = FLUIDCELL;
-		mp4Vector val(tmpi,tmpj,tmpk,-1.0);
-		levelset[(i + grid.Nx*(j + grid.Ny*k))] = val;
+		//mp4Vector val(tmpi,tmpj,tmpk,-1.0);
+		//levelset[(i + grid.Nx*(j + grid.Ny*k))] = val;
 
 	}
 
