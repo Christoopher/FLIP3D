@@ -80,36 +80,62 @@ void move_particles_in_grid(Particles & particles, Grid & grid, float dt)
 		vel = vec3f(grid.u.trilerp(ui,j,k,ufx,fy,fz), grid.v.trilerp(i,vj,k,fx,vfy,fz), grid.w.trilerp(i,j,wk,fx,fy,wfz));			
 
 		//Move particle one step with forward euler
-		particles.pos[p] += dt*vel;
+		vec3f newpos = particles.pos[p] + dt*vel;
 
-		clamp(particles.pos[p][0], xmin,xmax);
-		clamp(particles.pos[p][1], ymin,ymax);
-		clamp(particles.pos[p][2], zmin,zmax);
 
-		//particles.pos[p] = newpos;
-		
-// 		if(grid.marker(floor(newpos[0]), floor(newpos[1]), floor(newpos[2])) == SOLIDCELL)
-// 		{
-// 			//Particles has enetered a solid voxel. clamp back to surface.
-// 
-// 			//Direction
-// 			//vec3f dir = newpos - particles.pos[p];
-// 			//float length = mag(dir);
-// 			newpos = particles.pos[p];// + 0.05*dir;
-// 
-// 		}
-// 		//else
-// 		particles.pos[p] = newpos;
+		//Clamp to border
+		clamp(newpos[0], xmin,xmax);
+		clamp(newpos[1], ymin,ymax);
+		clamp(newpos[2], zmin,zmax);
+
+		grid.bary_x(newpos[0], ui, ufx);		
+		grid.bary_y(newpos[1], vj, vfy);		
+		grid.bary_z(newpos[2], wk, wfz);	
+
 			
-		
-		//Clamp pos to be inside of the solid walls
-		//clamp(particles.pos[p][0], xmin,xmax);
-		//clamp(particles.pos[p][1], ymin,ymax);
-		//clamp(particles.pos[p][2], zmin,zmax);
+		//Push particle out
+		float scale = 3.0;
+		if(grid.marker(ui,vj,wk) == SOLIDCELL)
+		{
+			// X - AXIS
+			if(grid.marker(ui+1,vj,wk) != SOLIDCELL) //Push left
+			{
+				newpos[0] += grid.h;
+			}
+			else if(grid.marker(ui-1,vj,wk) != SOLIDCELL) //Push right
+			{
+				newpos[0] -= grid.h;
+			}
 
+			// Y - AXIS 
+			
+			if(grid.marker(ui,vj+1,wk) != SOLIDCELL) //Push up
+			{
+				newpos[1] += grid.h;
+			}
+			else if(grid.marker(ui,vj-1,wk) != SOLIDCELL) //Push down
+			{
+				newpos[1] -= grid.h;
+			}
 
+			// Z - AXIS 
+			if(grid.marker(ui,vj,wk-1) != SOLIDCELL) //Push backwards
+			{
+				newpos[2] -= grid.h;
+			}
+			else if(grid.marker(ui,vj,wk+1) != SOLIDCELL) //Push forward
+			{
+				newpos[2] += grid.h;
+			}
+			
+		}
+			
+
+		particles.pos[p] = newpos;
 	}
 }
+
+
 
 // void write_to_file(const char * filename);
 

@@ -14,15 +14,15 @@ struct SolidMesh
 	}
 	SolidMesh(std::string filename, vec3f pos, float h) : position(pos)
 	{
-		mesh = LoadObjMesh(filename);
-		seed_random_points(h);
+		mesh = LoadObjMesh(filename);		
 	}
 
 	void init(std::string filename, vec3f pos, float h)
 	{
 		mesh = LoadObjMesh(filename);
-		seed_random_points(h);
+		scale = h;
 		position = pos;
+		seed_random_points(h);
 	}
 
 	void mesh_to_grid(Grid & grid)
@@ -35,6 +35,7 @@ struct SolidMesh
 			vec3f pos = itr->vertices->pos;
 			pos += position;
 
+			/*
 			//check x
 			if(pos[0] < 0.0 || pos[0] > grid.h * grid.Nx)
 				continue;
@@ -44,35 +45,43 @@ struct SolidMesh
 			//check z
 			if(pos[2] < 0.0 || pos[2] > grid.h * grid.Nz)
 				continue;
+			*/
 
-			i = floor(pos[0]);
-			j = floor(pos[1]);
-			k = floor(pos[2]);
+			i = floor(pos[0]*scale);
+			j = floor(pos[1]*scale);
+			k = floor(pos[2]*scale);
 
 			grid.marker(i,j,k) = SOLIDCELL;
 		}
 
-		std::vector<vec3f>::iterator itr2;
-		for (itr2 = randomPoints.begin(); itr2 != randomPoints.end(); itr2++)
+		int shrinks = 3;
+		float shrinkage = 1.0;
+		for(int itr = 0; itr < shrinks; ++itr)
 		{
-			vec3f pos = *itr2;
-			pos += position;
-
-			//check x
-			if(pos[0] < 0.0 || pos[0] > grid.h * grid.Nx)
-				continue;
-			//check y
-			if(pos[1] < 0.0 || pos[1] > grid.h * grid.Ny)
-				continue;
-			//check z
-			if(pos[2] < 0.0 || pos[2] > grid.h * grid.Nz)
-				continue;
-
-			i = floor(pos[0]);
-			j = floor(pos[1]);
-			k = floor(pos[2]);
-
-			grid.marker(i,j,k) = SOLIDCELL;
+			std::vector<vec3f>::iterator itr2;
+			for (itr2 = randomPoints.begin(); itr2 != randomPoints.end(); itr2++)
+			{
+				vec3f pos = *itr2*shrinkage;
+				pos += position*shrinkage;
+	
+				/*
+				//check x
+				if(pos[0] < 0.0 || pos[0] > grid.h * grid.Nx)
+					continue;
+				//check y
+				if(pos[1] < 0.0 || pos[1] > grid.h * grid.Ny)
+					continue;
+				//check z
+				if(pos[2] < 0.0 || pos[2] > grid.h * grid.Nz)
+					continue;
+				*/
+				i = floor(pos[0]);
+				j = floor(pos[1]);
+				k = floor(pos[2]);
+		
+				grid.marker(i,j,k) = SOLIDCELL;
+			}
+			shrinkage *= (1.0 - scale);
 		}
 	}
 
@@ -137,9 +146,9 @@ struct SolidMesh
 		int i,j,k;
 		for (itr = mesh.faces.begin(); itr != mesh.faces.end(); itr++)
 		{
-			vec3f p1 = (*itr).vertices[0].pos + position;
-			vec3f p2 = (*itr).vertices[1].pos + position;
-			vec3f p3 = (*itr).vertices[2].pos + position;
+			vec3f p1 = ((*itr).vertices[0].pos + position)*scale;
+			vec3f p2 = ((*itr).vertices[1].pos + position)*scale;
+			vec3f p3 = ((*itr).vertices[2].pos + position)*scale;
 			glVertex3f(p1[0],p1[1],p1[2]);
 			glVertex3f(p2[0],p2[1],p2[2]);
 			glVertex3f(p3[0],p3[1],p3[2]);
@@ -151,7 +160,7 @@ struct SolidMesh
 		std::vector<vec3f>::iterator itr2;
 		for (itr2 = randomPoints.begin(); itr2 != randomPoints.end(); itr2++)
 		{
-			vec3f p1 = *itr2 + position;
+			vec3f p1 = (*itr2 + position)*scale;
 			glVertex3f(p1[0],p1[1],p1[2]);
 		}
 		glEnd();
@@ -160,7 +169,7 @@ struct SolidMesh
 
 	ObjMesh mesh;
 	vec3f position;
-	
+	float scale;
 	std::vector<vec3f> randomPoints;
 	
 };

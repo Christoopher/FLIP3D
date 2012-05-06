@@ -426,8 +426,6 @@ void DrawSolidVoxels()
 	testMesh2.draw();
 }
 
-
-
 void DrawMesh()
 {
 	glUseProgram(mesh_SP);
@@ -455,7 +453,6 @@ void DrawMesh()
 	glEnd();
 }
 
-
 //----------------------------------------------------------------------------//
 // Draws all content
 //----------------------------------------------------------------------------//
@@ -482,7 +479,7 @@ void OpenGl_drawAndUpdate(bool &running)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	//Disables vsync
-	wglSwapIntervalEXT(0);
+	//wglSwapIntervalEXT(0);
 
 	//Camera Matrix
 	M3DMatrix44f mCamera;
@@ -492,12 +489,12 @@ void OpenGl_drawAndUpdate(bool &running)
 	modelViewMatrix.Rotate(-rotDx,1.0f,0.0f,0.0f);
 	modelViewMatrix.Rotate(-rotDy,0.0f,1.0f,0.0f);
 
-	modelViewMatrix.Translate(-grid->Nx*0.5f,-grid->Ny*0.5f,-grid->Nz*0.5f);
+	modelViewMatrix.Translate(-grid->Nx*0.5f*grid->h,-grid->Ny*0.5f*grid->h,-grid->Nz*0.5f*grid->h);
 
 	
-	//DrawSolidVoxels();
-	//DrawParticles();
-	DrawMesh();
+	DrawSolidVoxels();
+	DrawParticles();
+	//DrawMesh();
 	
 
 	if(showgrid)
@@ -656,11 +653,11 @@ void OpenGl_initViewer(int width_, int height_, Grid & grid_)
 	
 
 	//Move the camera back 5 units
-	cameraFrame.SetOrigin(0.0f,0.0f,110.0f);
+	cameraFrame.SetOrigin(0.0f,0.0f,10.0);
 
 
-	testMesh.init("cube10.obj", vec3f(25,0,32) ,grid->h);
-	testMesh2.init("cube10.obj", vec3f(0,0,20) ,grid->h);
+	testMesh.init("cube10.obj", vec3f(25,0,25) ,grid->h);
+	testMesh2.init("cube10.obj", vec3f(0,0,10) ,grid->h);
 
 }
 

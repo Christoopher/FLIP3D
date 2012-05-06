@@ -24,7 +24,7 @@
 const int perCell = 8;
 const int box = 10;
 const int Nparticles = 30000*perCell;
-const int dimx = 16, dimy = 16, dimz = 16;
+const int dimx = 32, dimy = 32, dimz = 32;
 
 void initVoxels(float * voxelPositions, int dx, int dy, int dz)
 {
@@ -35,7 +35,7 @@ void initVoxels(float * voxelPositions, int dx, int dy, int dz)
 			for (int x = 0; x < dx; ++x) {
 				*posItr++ = (float)x;
 				*posItr++ = (float)y;
-				*posItr++ = dz - (float)z;	  
+				*posItr++ = (float)z;	  
 			}
 		}
 	}
@@ -44,9 +44,9 @@ void initVoxels(float * voxelPositions, int dx, int dy, int dz)
 void update_voxel_flags(Grid & grid, Array3f & flags)
 {
 
-	for(int k = 0; k < grid.Nz; ++k)
-		for(int j = 0; j < grid.Ny; ++j)
-			for(int i = 0; i < grid.Nx; ++i)
+	for(int k = 1; k < grid.Nz-1; ++k)
+		for(int j = 1; j < grid.Ny-1; ++j)
+			for(int i = 1; i < grid.Nx-1; ++i)
 			{
 				flags(i,j,k) = (float)grid.marker(i,j,k);
 			}
@@ -82,7 +82,7 @@ int numframes;
 double avgtime = 0;
 int main(void)
 {
-	Fluid_Solver fluid_solver(dimx,dimy,dimz,1.0f,1.0f/30.0f,9.82f,1.0f,Nparticles);
+	Fluid_Solver fluid_solver(dimx,dimy,dimz,0.1,1.0f/30.0f,9.82f,1.0f,Nparticles);
 	fluid_solver.init_box();
 
 	OpenGl_initViewer(600, 600,fluid_solver.grid);
@@ -91,25 +91,12 @@ int main(void)
 	
 	int Nvoxels = dimx*dimy*dimz;
 	Array3f voxelFlags(dimx,dimy,dimz);	
-	float * voxelPositions  = new float[3*dimx*dimy*dimz];
-	
+	float * voxelPositions  = new float[3*dimx*dimy*dimz];	
 	initVoxels(voxelPositions,dimx,dimy,dimz);
 
 	OpenGl_initWireframeCube(voxelPositions,voxelFlags.data,Nvoxels);
 	update_voxel_flags(fluid_solver.grid,voxelFlags);
 
-	//initLevelset(128,0.3);
-
-	//levelset = new mp4Vector[dimx*dimy*dimz];
-	/*for(int k = 0; k < dimz; ++k)
-		for(int j = 0; j < dimy; ++j)
-			for(int i = 0; i < dimx; ++i)
-			{
-				levelset[(i + dimx*(j + dimy *k))] = mp4Vector(i,j,k,1000.0);
-			}
-	*/
-	//tri = MarchingCubes(128,128,128,0,levelset,LinearInterp,numOfTriangles);
-	
 	
 	while(running) {
 
@@ -119,13 +106,10 @@ int main(void)
 		reset = false;
 
 		if(showgrid)
-		{
-			testMesh.mesh_to_grid(fluid_solver.grid);
+		{		
 			update_voxel_flags(fluid_solver.grid,voxelFlags);
 			OpenGl_updateVoxels(voxelPositions, voxelFlags, Nvoxels);
 		}
-		
-		
 
 		OpenGl_drawAndUpdate(running);
 	
@@ -143,24 +127,13 @@ int main(void)
 // 			numframes++;
 			
 		//	write_paricle_pos_binary(fluid_solver.particles);
-			//delete [] tri;		
-			//tri = MarchingCubes(dimx,dimy,dimz,0,levelset,LinearInterp,numOfTriangles);
 
-			fluid_solver.createSurface();
-
-			openGl_setMesh(fluid_solver.tri,fluid_solver.nrofTriangles);
-
-
-			//Nu fiins fluid_solver.triangles, fluid_solver.nroftriangles
+			//fluid_solver.createSurface();
+			//openGl_setMesh(fluid_solver.tri,fluid_solver.nrofTriangles);
 		}
-
-		
 
 		OpenGl_updateParticleLocation(fluid_solver.particles.pos, sizeof(vec3f)*fluid_solver.particles.currnp);
 		OpenGl_updateParticleVelocity(fluid_solver.particles.vel,sizeof(vec3f)*fluid_solver.particles.currnp);
-		
-		
-
 	}
 	
 
@@ -168,7 +141,7 @@ int main(void)
 // 	std::cout << std::scientific;
 // 	std::cout << "Avg. time" << avgtime/(numframes-6) << "\n";
 // 	std::cout << "Press any key to quit...\n";
-// 	std::cin.get();
+//	std::cin.get();
 
 	
 

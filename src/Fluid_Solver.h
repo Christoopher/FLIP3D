@@ -65,9 +65,9 @@ void Fluid_Solver::init_box()
 	float r1,r2,r3;
 	float subh = grid.h/2.0f;
 	vec3f pos(0);
-	for(float k = 5; k < 10; ++k)
-		for(float j = 5; j < 10; ++j)
-			for(float i = 5; i < 10; ++i)
+	for(float k = 20; k < 31; ++k)
+		for(float j = 20; j < 31; ++j)
+			for(float i = 20; i < 31; ++i)
 			{
 				for (int kk = -1; kk < 1; ++kk)
 					for(int jj = -1; jj < 1; ++jj)
@@ -148,6 +148,8 @@ void Fluid_Solver::init_box()
 void Fluid_Solver::step_frame()
 {
 	static int frame = 0;
+	if(frame == 40)
+		int kalle = 0;
 	for(float elapsed = 0; elapsed < timestep;)
 	{
 
@@ -175,8 +177,8 @@ void Fluid_Solver::step(float dt)
 
 	
 	grid.classify_voxel();
-	//testMesh.mesh_to_grid(grid);
-	//testMesh2.mesh_to_grid(grid);
+	testMesh.mesh_to_grid(grid);
+	testMesh2.mesh_to_grid(grid);
 
 
 	grid.apply_boundary_conditions();

@@ -263,6 +263,7 @@ struct Grid
 					w(i,j,w.nz-1) = w(i,j,w.nz-2) = 0.0f; //Back wall
 			}
 
+		//Solidvoxels
 		#pragma omp parallel for
 		for(int k = 1; k < Nz-1; ++k)
 			for(int j = 1; j < Ny-1; ++j)
@@ -272,7 +273,7 @@ struct Grid
 					{
 						u(i,j,k) = u(i+1,j,k) = 0;
 						v(i,j,k) = v(i,j+1,k) = 0;
-						v(i,j,k) = v(i,j,k+1) = 0;
+						w(i,j,k) = w(i,j,k+1) = 0;
 					}
 				}
 
