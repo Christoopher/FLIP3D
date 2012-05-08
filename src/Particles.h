@@ -399,16 +399,32 @@ void write_paricle_pos_binary(Particles & particles)
 
 	fclose(file);
 
-	file = fopen(str.c_str(),"rb");
-	count = 0;
+	frame++;
+}
+
+void read_paricle_pos_binary(Particles & particles, int frame)
+{
+	int count;
+	std::string str;
+	std::stringstream ss;
+	ss << "frame_" << frame << ".dat";
+	ss >> str;
+	FILE *file = fopen(str.c_str(),"rb");
+	if(file == NULL)
+	{
+		std::cout << "Hej";
+		system("pause");
+	}
+		
 	fread((void *) (&count),sizeof(int),1,file);
+	
+	particles.maxnp = count;
+	particles.currnp = count; 
 	particles.pos.clear();
 	particles.pos.resize(count);
 	fread((void *) (&particles.pos[0]),sizeof(vec3f),particles.pos.size(),file);
 
 	fclose(file);
-
-	frame++;
 }
 
 #endif

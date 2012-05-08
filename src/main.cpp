@@ -25,6 +25,7 @@ const int perCell = 8;
 const int box = 10;
 const int Nparticles = 30000*perCell;
 const int dimx = 32, dimy = 32, dimz = 32;
+const float gridh = 0.1;
 
 void initVoxels(float * voxelPositions, int dx, int dy, int dz)
 {
@@ -90,7 +91,7 @@ runFluidSim()
 	Fluid_Solver fluid_solver(dimx,dimy,dimz,0.1,1.0f/30.0f,9.82f,1.0f,Nparticles);
 	fluid_solver.init_box();
 
-	OpenGl_initViewer(600, 600,fluid_solver.grid);
+	OpenGl_initViewer(600, 600, dimx, dimy, dimz, gridh);
 	OpenGl_initParticles(&fluid_solver.particles.pos[0], &fluid_solver.particles.vel[0], sizeof(vec3f)*fluid_solver.particles.currnp, fluid_solver.particles.currnp);	
 	
 	int Nvoxels = dimx*dimy*dimz;
@@ -146,16 +147,48 @@ runFluidSim()
 //	std::cin.get();
 }
 
+void
+runSurfaceReconstruction(int frame)
+{
+	Particles particles;
+	TRIANGLE * tri;
+	int nrofTriangles;
+	
+	OpenGl_initViewer(600, 600, dimx, dimy, dimz, gridh);
 
+	
+	while(running) {
+
+		
+		/*if(reset)
+			fluid_solver.reset();
+		reset = false;*/
+
+		OpenGl_drawAndUpdate(running);
+
+		if(step || play)
+		{
+			
+			tri = new TRIANGLE[1];
+			read_paricle_pos_binary(particles, frame);
+
+			mesh(particles,dimx, dimy, dimz, h, 1, nrofTriangles, tri);
+			openGl_setMesh(tri, nrofTriangles);
+		}
+	}
+	
+
+	TerminateViewer();
+
+}
 
 
 
 int main(void)
 {
+	//runFluidSim();
 	
-	runFluidSim();
-	
-	//runSurfaceReconstrunction();
+	runSurfaceReconstruction(1); //Read specific frame
 	
 	return 0;
 }

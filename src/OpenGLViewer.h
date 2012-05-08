@@ -51,7 +51,8 @@ float posDx = 0.0f, posDy = 0.0f, zoom = 0.0f, rotDx = 0.0f, rotDy = 0.0f;
 int nrOfParticles, nrOfVoxels;
 double t0 = 0;
 int frames = 0;
-Grid *grid;
+int Nx, Ny, Nz;
+float h;
 bool running = true;
 GLfloat edge = 3.0f;
 bool step = false, reset = false, showgrid = false, play = false;
@@ -385,8 +386,8 @@ void DrawParticles()
 	glBindVertexArray(particle_VAO);
 	glUniformMatrix4fv(particle_ModelViewMtxLocation, 1, GL_FALSE, transformPipeline.GetModelViewMatrix());
 	glUniformMatrix4fv(particle_ProjectionMtxLocation, 1, GL_FALSE, transformPipeline.GetProjectionMatrix());
-	glUniform1iv(particle_dimzLocation,1,&grid->Nz);
-	glUniform1fv(particle_hLocation,1,&grid->h);
+	glUniform1iv(particle_dimzLocation,1, &Nz);
+	glUniform1fv(particle_hLocation,1, &h);
 	if(up_is_down)
 		edge += 0.025;
 	if(down_is_down)
@@ -489,15 +490,15 @@ void OpenGl_drawAndUpdate(bool &running)
 	modelViewMatrix.Rotate(-rotDx,1.0f,0.0f,0.0f);
 	modelViewMatrix.Rotate(-rotDy,0.0f,1.0f,0.0f);
 
-	modelViewMatrix.Translate(-grid->Nx*0.5f*grid->h,-grid->Ny*0.5f*grid->h,-grid->Nz*0.5f*grid->h);
+	modelViewMatrix.Translate(-Nx*0.5f*h,-Ny*0.5f*h,-Nz*0.5f*h);
 
 	
 #ifdef SOLIDS
 	DrawSolidVoxels();
 #endif
 
-	DrawParticles();
-	//DrawMesh();
+	//DrawParticles();
+	DrawMesh();
 	
 
 	if(showgrid)
@@ -609,11 +610,14 @@ void GLFWCALL MousePosFunc( int x, int y )
 //----------------------------------------------------------------------------//
 // Creates and sets up a window
 //----------------------------------------------------------------------------//
-void OpenGl_initViewer(int width_, int height_, Grid & grid_)
+void OpenGl_initViewer(int width_, int height_, const int dimx_, const int dimy_, const int dimz_, const float gridh)
 {
-	grid = &grid_;
 	winw = width_;
 	winh = height_;
+	Nx = dimx_;
+	Ny = dimy_;
+	Nz = dimz_;
+	h = gridh;
 
 	// Initialize GLFW
 	if( !glfwInit() )
@@ -659,8 +663,8 @@ void OpenGl_initViewer(int width_, int height_, Grid & grid_)
 	cameraFrame.SetOrigin(0.0f,0.0f,10.0);
 
 #ifdef SOLIDS
-	testMesh.init("cube10.obj", vec3f(23,-1,33) ,grid->h);
-	testMesh2.init("cube10.obj", vec3f(0,-1,9) ,grid->h);
+	testMesh.init("cube10.obj", vec3f(23,-1,33) , h);
+	testMesh2.init("cube10.obj", vec3f(0,-1,9) , h);
 #endif
 
 }

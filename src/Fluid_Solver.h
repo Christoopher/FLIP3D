@@ -47,11 +47,11 @@ struct Fluid_Solver
 };
 
 
-
+/*
 void Fluid_Solver::createSurface()
 {
 	mesh(particles,grid,1,nrofTriangles,tri);
-}
+}*/
 
 void Fluid_Solver::reset()
 {

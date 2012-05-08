@@ -228,43 +228,77 @@ inline void getPhi(Particles & p, armaMat * G, vec3f * smoothPos, mp4Vector & po
 	//std::cout << "[" << point.x << "," << point.y << "," << point.z << "] : " << point.val << "\n";
 }
 
-void createPhi(Particles & p, vec3f * smoothpos, armaMat * Gs, Grid & grid, mp4Vector * phi)
+/*inline void getSimplePhi(Particles & p, mp4Vector & point)
 {
-	int Dx = grid.Nx, Dy = grid.Ny, Dz = grid.Nz;
-	for(int k = 1; k < Dz-1; ++k)
-		for(int j = 1; j < Dy-1; ++j)
-			for(int i = 1; i < Dx-1; ++i)
+	float XminusXnorm, r0, wi;
+	vec3f r;
+	point.val = 0.0;
+	for(int i = 0; i < p.currnp; ++i)
+	{
+		Grnorm = mag(Gr);	
+
+		//Get norm (i.e. max) of G
+		Gnorm = max(max(G[i]));
+
+
+		float gg = Grnorm*Grnorm;
+		float P = max((1.0-gg)*(1.0-gg)*(1.0-gg),0.0);
+		point.val += Gnorm * P;
+	}
+}*/
+
+void createPhi(Particles & p, vec3f * smoothpos, armaMat * Gs, const int Nx, const int Ny, const int Nz, const float h, mp4Vector * phi)
+{
+	for(int k = 1; k < Nz-1; ++k)
+		for(int j = 1; j < Ny-1; ++j)
+			for(int i = 1; i < Nx-1; ++i)
 			{
-				int phioffset = i-1 + (Dx-2)*(j-1 + (Dy-2)*(k-1));
-				phi[phioffset].x = i*grid.h;
-				phi[phioffset].y = j*grid.h;
-				phi[phioffset].z = k*grid.h;
+				int phioffset = i-1 + (Nx-2)*(j-1 + (Ny-2)*(k-1));
+				phi[phioffset].x = i*h;
+				phi[phioffset].y = j*h;
+				phi[phioffset].z = k*h;
 				getPhi(p,Gs,smoothpos,phi[phioffset]);
 			}
 }
 
-void mesh(Particles & p, Grid & grid, int res, int & numOfTriangles, TRIANGLE *& tri)
+/*void createSimplePhi(Particles & p, const int Nx, const int Ny, const int Nz, const float h, mp4Vector * phi)
 {
-	//std::cout << "Started meshing\n";
+	for(int k = 1; k < Nz-1; ++k)
+		for(int j = 1; j < Ny-1; ++j)
+			for(int i = 1; i < Nx-1; ++i)
+			{
+				int phioffset = i-1 + (Nx-2)*(j-1 + (Ny-2)*(k-1));
+				phi[phioffset].x = i*h;
+				phi[phioffset].y = j*h;
+				phi[phioffset].z = k*h;
+				getSimplePhi(p,phi[phioffset]);
+			}
+}*/
+
+void 
+mesh(Particles & p, const int Nx, const int Ny, const int Nz, const float h, int res, int & numOfTriangles, TRIANGLE *& tri)
+{
+	std::cout << "Started meshing\n";
 	vec3f * smoothPos = new vec3f[p.currnp];
 	std::cout << "Smooth particle positions\n";
-	smoothParticles(p, smoothPos,0.9,grid.h);
+	smoothParticles(p, smoothPos,0.9, h);
 	
 	armaMat * Gs = new armaMat[p.currnp];
 	std::cout << "Calculate Anisostropic matrices G\n";
 	calcAniMatrices(p,Gs);
 
 	mp4Vector * phi;
-	phi = new mp4Vector[(grid.Nx-2)*(grid.Ny-2)*(grid.Nz-2)];
+	phi = new mp4Vector[(Nx-2)*(Ny-2)*(Nz-2)];
 	std::cout << "Create the levelset\n";
-	createPhi(p,smoothPos,Gs,grid,phi);
+	createPhi(p,smoothPos,Gs,Nx,Ny,Nz,h,phi);
+	//createSimplePhi(p,Nx,Ny,Nz,h,phi);
 
 	delete [] Gs;
 	delete [] smoothPos;
 
-	//std::cout << "Run marching cubes\n";
+	std::cout << "Run marching cubes\n";
 	delete [] tri;
-	tri = MarchingCubes(grid.Nx-2,grid.Ny-2,grid.Nz-2,0.5,phi,LinearInterp,numOfTriangles);
+	tri = MarchingCubes(Nx-2, Ny-2, Nz-2, 0.5, phi, LinearInterp, numOfTriangles);
 	std::cout << "Marching cubes creates: " << numOfTriangles << " triangles\n";
 	delete [] phi;
 }

@@ -60,7 +60,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ALGLIB)/src;../src/OpenGLRelated/include/GLTools/include/;../src/OpenGLRelated/include/glew/;../src/OpenGLRelated/include/glfw/;../src/OpenGLRelated/include/GLTools/src/;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../src/OpenGLRelated/include/GLTools/include/;../src/OpenGLRelated/include/glew/;../src/OpenGLRelated/include/glfw/;../src/OpenGLRelated/include/GLTools/src/;</AdditionalIncludeDirectories>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
@@ -79,7 +79,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>$(ALGLIB)/src;../src/OpenGLRelated/include/GLTools/include/;../src/OpenGLRelated/include/glew/;../src/OpenGLRelated/include/glfw/;../src/OpenGLRelated/include/GLTools/src/;</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>../src/OpenGLRelated/include/GLTools/include/;../src/OpenGLRelated/include/glew/;../src/OpenGLRelated/include/glfw/;../src/OpenGLRelated/include/GLTools/src/;</AdditionalIncludeDirectories>
       <OpenMPSupport>true</OpenMPSupport>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
     </ClCompile>
@@ -93,19 +93,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\src\ALGLIB\alglibinternal.cpp" />
-    <ClCompile Include="..\src\ALGLIB\alglibmisc.cpp" />
-    <ClCompile Include="..\src\ALGLIB\ap.cpp" />
-    <ClCompile Include="..\src\ALGLIB\dataanalysis.cpp" />
-    <ClCompile Include="..\src\ALGLIB\diffequations.cpp" />
-    <ClCompile Include="..\src\ALGLIB\fasttransforms.cpp" />
-    <ClCompile Include="..\src\ALGLIB\integration.cpp" />
-    <ClCompile Include="..\src\ALGLIB\interpolation.cpp" />
-    <ClCompile Include="..\src\ALGLIB\linalg.cpp" />
-    <ClCompile Include="..\src\ALGLIB\optimization.cpp" />
-    <ClCompile Include="..\src\ALGLIB\solvers.cpp" />
-    <ClCompile Include="..\src\ALGLIB\specialfunctions.cpp" />
-    <ClCompile Include="..\src\ALGLIB\statistics.cpp" />
     <ClCompile Include="..\src\main.cpp" />
     <ClCompile Include="..\src\MarchingCubes\MarchingCubes.cpp" />
     <ClCompile Include="..\src\MarchingCubes\mpVector.cpp" />
