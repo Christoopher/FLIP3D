@@ -130,7 +130,7 @@ runFluidSim()
 // 				avgtime += stopwatch.getElapsedTime();
 // 			numframes++;
 			
-			//write_paricle_pos_binary(fluid_solver.particles);
+			write_paricle_pos_binary(fluid_solver.particles);
 
 			//fluid_solver.createSurface();
 			//openGl_setMesh(fluid_solver.tri,fluid_solver.nrofTriangles);
@@ -156,6 +156,11 @@ runSurfaceReconstruction(int frame)
 	
 	OpenGl_initViewer(600, 600, dimx, dimy, dimz, gridh);
 
+	tri = new TRIANGLE[1];
+	read_paricle_pos_binary(particles, frame);
+
+
+	OpenGl_initParticles(&particles.pos[0], &particles.pos[0], sizeof(vec3f)*particles.currnp, particles.currnp);	
 	
 	while(running) {
 
@@ -169,8 +174,6 @@ runSurfaceReconstruction(int frame)
 		if(step || play)
 		{
 			
-			tri = new TRIANGLE[1];
-			read_paricle_pos_binary(particles, frame);
 
 			mesh(particles,dimx, dimy, dimz, h, 1, nrofTriangles, tri);
 			openGl_setMesh(tri, nrofTriangles);
@@ -188,7 +191,7 @@ int main(void)
 {
 	//runFluidSim();
 	
-	runSurfaceReconstruction(1); //Read specific frame
+	runSurfaceReconstruction(20); //Read specific frame
 	
 	return 0;
 }

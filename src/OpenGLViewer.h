@@ -497,7 +497,7 @@ void OpenGl_drawAndUpdate(bool &running)
 	DrawSolidVoxels();
 #endif
 
-	//DrawParticles();
+	DrawParticles();
 	DrawMesh();
 	
 

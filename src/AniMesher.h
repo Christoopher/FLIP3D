@@ -13,7 +13,7 @@
 typedef arma::mat armaMat;
 typedef arma::vec armaVec;
 
-float H = 1.0;
+float H = 0.5;
 
 
 void weightedPos(Particles & p, int i,float r, vec3f & xiW)
@@ -124,15 +124,11 @@ void calcGi(const armaMat & Ci, armaMat & Gi)
 	float kspecial = 0.8;	//(1-kn) -> Hur mycket i procent får egenvärdena skilja sig i axlarna.
 	float kn = 1.0;
 	
-	//R.
-	//RT.zeros(3,3);
-	//eigenv.zeros(3,1);
-	
 	float Cnorm = norm(Ci,"inf");
 	
 	float ks = 1.0/Cnorm; // gives norm(ks*Ci) approx 1
 
-	svd_econ(R, eigenv, RT, Ci,'b');
+	svd(R, eigenv, RT, Ci);
 	
 	bool adjust = false;
 	if(eigenv(2) / eigenv(0) < kn)
@@ -199,9 +195,6 @@ inline void getPhi(Particles & p, armaMat * G, vec3f * smoothPos, mp4Vector & po
 		r[0] = point.x - smoothPos[i][0]; 
 		r[1] = point.y - smoothPos[i][1];
 		r[2] = point.z - smoothPos[i][2];
-		/*r[0] = point.x - p.pos[i][0];//smoothPos[i][0]; 
-		r[1] = point.y - p.pos[i][1];//smoothPos[i][1];
-		r[2] = point.z - p.pos[i][2];//smoothPos[i][2];*/
 
 		Gr[0] = G[i](0,0)*r[0] + G[i](0,1)*r[1] + G[i](0,2)*r[2];
 		Gr[1] = G[i](1,0)*r[0] + G[i](1,1)*r[1] + G[i](1,2)*r[2];
@@ -210,7 +203,7 @@ inline void getPhi(Particles & p, armaMat * G, vec3f * smoothPos, mp4Vector & po
 		Grnorm = mag(Gr);	
 
 		//Get norm (i.e. max) of G
-		Gnorm = max(max(G[i]));
+		Gnorm = norm(G[i],"inf");
 		/*for(int n = 0; n < 3; ++n)
 		{
 			for(int m = 0; m<3; ++m)
@@ -223,9 +216,11 @@ inline void getPhi(Particles & p, armaMat * G, vec3f * smoothPos, mp4Vector & po
 		float gg = Grnorm*Grnorm;
 		float P = max((1.0-gg)*(1.0-gg)*(1.0-gg),0.0);
 		point.val += Gnorm * P;
-		//point.val += (1.0/(H*H*H)) * P;
 	}
-	//std::cout << "[" << point.x << "," << point.y << "," << point.z << "] : " << point.val << "\n";
+#if (DEBUG)
+	if(point.val > 0)
+		std::cout << "[" << point.x << "," << point.y << "," << point.z << "] : " << point.val << "\n";
+#endif
 }
 
 /*inline void getSimplePhi(Particles & p, mp4Vector & point)
@@ -281,7 +276,7 @@ mesh(Particles & p, const int Nx, const int Ny, const int Nz, const float h, int
 	std::cout << "Started meshing\n";
 	vec3f * smoothPos = new vec3f[p.currnp];
 	std::cout << "Smooth particle positions\n";
-	smoothParticles(p, smoothPos,0.9, h);
+	smoothParticles(p, smoothPos,0.0, h);
 	
 	armaMat * Gs = new armaMat[p.currnp];
 	std::cout << "Calculate Anisostropic matrices G\n";
@@ -298,7 +293,7 @@ mesh(Particles & p, const int Nx, const int Ny, const int Nz, const float h, int
 
 	std::cout << "Run marching cubes\n";
 	delete [] tri;
-	tri = MarchingCubes(Nx-2, Ny-2, Nz-2, 0.5, phi, LinearInterp, numOfTriangles);
+	tri = MarchingCubes(Nx-2, Ny-2, Nz-2, 2, phi, LinearInterp, numOfTriangles);
 	std::cout << "Marching cubes creates: " << numOfTriangles << " triangles\n";
 	delete [] phi;
 }
