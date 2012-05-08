@@ -1,6 +1,7 @@
 #ifndef FLUID_SOLVER_H
 #define FLUID_SOLVER_H
 
+#include "config.h"
 #include "Particles.h"
 #include "Grid.h"
 
@@ -65,9 +66,9 @@ void Fluid_Solver::init_box()
 	float r1,r2,r3;
 	float subh = grid.h/2.0f;
 	vec3f pos(0);
-	for(float k = 20; k < 31; ++k)
+	for(float k = 27; k < 31; ++k)
 		for(float j = 20; j < 31; ++j)
-			for(float i = 20; i < 31; ++i)
+			for(float i = 27; i < 31; ++i)
 			{
 				for (int kk = -1; kk < 1; ++kk)
 					for(int jj = -1; jj < 1; ++jj)
@@ -148,8 +149,7 @@ void Fluid_Solver::init_box()
 void Fluid_Solver::step_frame()
 {
 	static int frame = 0;
-	if(frame == 40)
-		int kalle = 0;
+
 	for(float elapsed = 0; elapsed < timestep;)
 	{
 
@@ -167,19 +167,21 @@ void Fluid_Solver::step_frame()
 void Fluid_Solver::step(float dt)
 {
 
+	//grid.extend_velocity();
 	for (int i = 0; i < 5; i++)
 		move_particles_in_grid(particles,grid,0.2*dt);
 
 	grid.zero();
+
+	grid.classify_voxel();
+#ifdef SOLIDS
+	testMesh.mesh_to_grid(grid);
+	testMesh2.mesh_to_grid(grid);
+#endif
+
 	transfer_to_grid(particles,grid);
 	grid.save_velocities();
 	grid.add_gravity(dt);
-
-	
-	grid.classify_voxel();
-	testMesh.mesh_to_grid(grid);
-	testMesh2.mesh_to_grid(grid);
-
 
 	grid.apply_boundary_conditions();
 
@@ -188,13 +190,10 @@ void Fluid_Solver::step(float dt)
 	grid.calc_divergence();
 	grid.solve_pressure(100,1e-6);
 	grid.project(dt);
-	//grid.extend_velocity();
 
 	grid.apply_boundary_conditions();
 	grid.get_velocity_update();
 	update_from_grid(particles,grid);
-
-	
 }
 
 #endif

@@ -41,17 +41,17 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)..\bin\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)\intermediate\$(Configuration)\</IntDir>
-    <IncludePath>../src/Timing/;../src/OpenGLRelated/;../src/;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
-    <SourcePath>$(ALGLIB)/src;$(VCInstallDir)atlmfc\src\mfc;$(VCInstallDir)atlmfc\src\mfcm;$(VCInstallDir)atlmfc\src\atl;$(VCInstallDir)crt\src;</SourcePath>
+    <IncludePath>$(ARMA)/include;../src/Timing/;../src/OpenGLRelated/;../src/;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
+    <SourcePath>$(ARMA)/include;$(VCInstallDir)atlmfc\src\mfc;$(VCInstallDir)atlmfc\src\mfcm;$(VCInstallDir)atlmfc\src\atl;$(VCInstallDir)crt\src;</SourcePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)..\bin\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)\intermediate\$(Configuration)\</IntDir>
-    <IncludePath>$(ALGLIB)/src;../src/Timing/;../src/OpenGLRelated/;../src/;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
-    <SourcePath>$(ALGLIB)/src;$(VCInstallDir)atlmfc\src\mfc;$(VCInstallDir)atlmfc\src\mfcm;$(VCInstallDir)atlmfc\src\atl;$(VCInstallDir)crt\src;</SourcePath>
-    <ReferencePath>$(ALGLIB)/src;$(VCInstallDir)atlmfc\lib;$(VCInstallDir)lib</ReferencePath>
-    <LibraryPath>$(ALGLIB)/src;$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib</LibraryPath>
+    <IncludePath>$(ARMA)/include;;../src/Timing/;../src/OpenGLRelated/;../src/;$(VCInstallDir)include;$(VCInstallDir)atlmfc\include;$(WindowsSdkDir)include;$(FrameworkSDKDir)\include;</IncludePath>
+    <SourcePath>$(ARMA)/include;$(VCInstallDir)atlmfc\src\mfc;$(VCInstallDir)atlmfc\src\mfcm;$(VCInstallDir)atlmfc\src\atl;$(VCInstallDir)crt\src;</SourcePath>
+    <ReferencePath>$(VCInstallDir)atlmfc\lib;$(VCInstallDir)lib</ReferencePath>
+    <LibraryPath>$(VCInstallDir)lib;$(VCInstallDir)atlmfc\lib;$(WindowsSdkDir)lib;$(FrameworkSDKDir)\lib</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -66,8 +66,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>../src/OpenGLRelated/lib/glfw/;../src/OpenGLRelated/lib/glew/</AdditionalLibraryDirectories>
-      <AdditionalDependencies>glu32.lib;opengl32.lib;glfw.lib;glew32d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>../src/armadilloLibs/;../src/OpenGLRelated/lib/glfw/;../src/OpenGLRelated/lib/glew/</AdditionalLibraryDirectories>
+      <AdditionalDependencies>lapack_win32_MT.lib;blas_win32_MT.lib;glu32.lib;opengl32.lib;glfw.lib;glew32d.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -88,8 +88,8 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalDependencies>glu32.lib;opengl32.lib;glfw.lib;glew32d.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>../src/OpenGLRelated/lib/glfw/;../src/OpenGLRelated/lib/glew/</AdditionalLibraryDirectories>
+      <AdditionalDependencies>lapack_win32_MT.lib;blas_win32_MT.lib;glu32.lib;opengl32.lib;glfw.lib;glew32d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>../src/armadilloLibs/;../src/OpenGLRelated/lib/glfw/;../src/OpenGLRelated/lib/glew/</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -122,6 +122,7 @@
   <ItemGroup>
     <ClInclude Include="..\src\AniMesher.h" />
     <ClInclude Include="..\src\Array3D.h" />
+    <ClInclude Include="..\src\config.h" />
     <ClInclude Include="..\src\Fluid_Solver.h" />
     <ClInclude Include="..\src\Grid.h" />
     <ClInclude Include="..\src\MarchingCubes\MarchingCubes.h" />

@@ -1,10 +1,11 @@
 #ifndef _OPENGL_VIEWER_
 #define _OPENGL_VIEWER_
 
+
+#include "config.h"
+#include "Particles.h"
+
 #include "MarchingCubes/MarchingCubes.h"
-
-
-
 #include "LoadShaderUtility.h"
 
 //C/C++ headers
@@ -324,24 +325,23 @@ void OpenGl_initWireframeCube(void * positions, void * flags, int nrOfVoxels_)
 	glBindVertexArray(0);
 }
 
-//----------------------------------------------------------------------------//
-// Update particle locations
-//----------------------------------------------------------------------------//
-void OpenGl_updateParticleLocation(void * vertices, size_t size)
+////////////////////////
+// Update particles
+////////////////////////
+void OpenGl_updateParticles(Particles & p)
 {
+	nrOfParticles = p.pos.size();
+	int size = p.pos.size()*sizeof(vec3f);
+	glBindVertexArray(particle_VAO);
 	glBindBuffer(GL_ARRAY_BUFFER ,particle_VBO);
-	glBufferSubData(GL_ARRAY_BUFFER,0, size,vertices);
-	glBindBuffer(GL_ARRAY_BUFFER,0);
-}
-
-//----------------------------------------------------------------------------//
-// Update particle locations
-//----------------------------------------------------------------------------//
-void OpenGl_updateParticleVelocity(void * velocity, size_t size)
-{
-	glBindBuffer(GL_ARRAY_BUFFER ,particle_VBO);
-	glBufferSubData(GL_ARRAY_BUFFER,size, size,velocity);
-	glBindBuffer(GL_ARRAY_BUFFER,0);
+	glBufferData(GL_ARRAY_BUFFER,2*size,NULL,GL_STREAM_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER,0, size,&p.pos[0]);
+	glBufferSubData(GL_ARRAY_BUFFER,size,size,&p.vel[0]);
+	glVertexAttribPointer(particle_VertexLocation, 3, GL_FLOAT, GL_FALSE, 0, 0);
+	glVertexAttribPointer(particle_VelocityLocation, 3, GL_FLOAT, GL_FALSE,0,(GLvoid *) size);
+	glEnableVertexAttribArray(particle_VertexLocation);
+	glEnableVertexAttribArray(particle_VelocityLocation);	
+	glBindVertexArray(0);
 }
 
 //----------------------------------------------------------------------------//
@@ -492,7 +492,10 @@ void OpenGl_drawAndUpdate(bool &running)
 	modelViewMatrix.Translate(-grid->Nx*0.5f*grid->h,-grid->Ny*0.5f*grid->h,-grid->Nz*0.5f*grid->h);
 
 	
+#ifdef SOLIDS
 	DrawSolidVoxels();
+#endif
+
 	DrawParticles();
 	//DrawMesh();
 	
@@ -655,9 +658,10 @@ void OpenGl_initViewer(int width_, int height_, Grid & grid_)
 	//Move the camera back 5 units
 	cameraFrame.SetOrigin(0.0f,0.0f,10.0);
 
-
-	testMesh.init("cube10.obj", vec3f(25,0,25) ,grid->h);
-	testMesh2.init("cube10.obj", vec3f(0,0,10) ,grid->h);
+#ifdef SOLIDS
+	testMesh.init("cube10.obj", vec3f(23,-1,33) ,grid->h);
+	testMesh2.init("cube10.obj", vec3f(0,-1,9) ,grid->h);
+#endif
 
 }
 

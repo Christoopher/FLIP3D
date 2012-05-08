@@ -47,22 +47,22 @@ struct SolidMesh
 				continue;
 			*/
 
-			i = floor(pos[0]*scale);
-			j = floor(pos[1]*scale);
-			k = floor(pos[2]*scale);
+			i = floor(pos[0]);
+			j = floor(pos[1]);
+			k = floor(pos[2]);
 
 			grid.marker(i,j,k) = SOLIDCELL;
 		}
 
-		int shrinks = 3;
+		int shrinks = 10;
 		float shrinkage = 1.0;
 		for(int itr = 0; itr < shrinks; ++itr)
 		{
 			std::vector<vec3f>::iterator itr2;
 			for (itr2 = randomPoints.begin(); itr2 != randomPoints.end(); itr2++)
 			{
-				vec3f pos = *itr2*shrinkage;
-				pos += position*shrinkage;
+				vec3f pos(*itr2*shrinkage);
+				pos += position;
 	
 				/*
 				//check x

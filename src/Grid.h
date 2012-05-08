@@ -215,11 +215,7 @@ struct Grid
 		#pragma omp parallel for
 		for(int j = 0; j < Ny; ++j)
 			for(int i = 0; i < Nx; ++i)
-				marker(i,j,0) = marker(i,j,Nz-1) = SOLIDCELL; //Front back wall cells
-
-
-		//solid.transfer_to_grid(this);	
-		
+				marker(i,j,0) = marker(i,j,Nz-1) = SOLIDCELL; //Front back wall cells	
 
 	}
 	
@@ -333,27 +329,15 @@ void Grid::form_precond()
 
 void Grid::extend_velocity()
 {
-	for(int k = 1; k < Nz-1; ++k)
-		for(int j = 1; j < Ny-1; ++j)
-			for(int i = 1; i < Nx-1; ++i)
+	vec3f vel(0.0);
+	float sum = 0.0;
+	for(int k = 0; k < Nz-1; ++k)
+		for(int j = 0; j < Ny-1; ++j)
+			for(int i = 0; i < Nx-1; ++i)
 			{
-				if(marker(i,j,k) == FLUIDCELL)
+				if(marker(i,j,k) != FLUIDCELL)
 				{
-					if(marker(i,j-1,k) != FLUIDCELL)
-					{
-						u(i,j-1,k) = u(i,j,k);
-						u(i+1,j-1,k) = u(i+1,j,k);
-					}
-
-					if(marker(i,j+1,k) != FLUIDCELL)
-					{
-						u(i,j+1,k) = u(i,j,k);
-						u(i+1,j+1,k) = u(i+1,j,k);
-					}
-					
-					w(i,j-1,k) = w(i,j,k);
-					w(i,j-1,k+1) = w(i,j,k+1);
-
+					int kalle = 0;
 				}
 			}
 }
@@ -395,17 +379,19 @@ void Grid::project(float dt)
 					w(i,j,k+1) += val;
 
 				}
-// 				else if(marker(i,j,k) == SOLIDCELL)
-// 				{
-// 					u(i,j,k) = 0.0f;
-// 					u(i+1,j,k) = 0.0f;
-// 
-// 					v(i,j,k) = 0.0f;
-// 					v(i,j+1,k) = 0.0f;
-// 
-// 					w(i,j,k) = 0.0f;
-// 					w(i,j,k+1) = 0.0f;
-// 				}
+				/*
+				else if(marker(i,j,k) == SOLIDCELL)
+				{
+					u(i,j,k) = 0.0f;
+					u(i+1,j,k) = 0.0f;
+ 
+					v(i,j,k) = 0.0f;
+					v(i,j+1,k) = 0.0f;
+ 
+					w(i,j,k) = 0.0f;
+					w(i,j,k+1) = 0.0f;
+				}
+				*/
 				/*else if (marker(i,j,k) == SOLIDCELL)
 					{
 						val = scale * float(pressure(i,j,k));
@@ -486,8 +472,6 @@ void Grid::calc_divergence()
 			{
 				if(marker(i,j,k) == FLUIDCELL)
 				{
-					//offset = i + Nx*(j + Ny*k); //Offset into rhs.data array
-
 					if(marker(i+1,j,k) == SOLIDCELL)		//If cell(i+1,j,k) remove u(i+1/2,j,k)
 						rhs(i,j,k) -= u(i,j,k); // + u(i+1,j,k); //u(i+1,j,k) is set to usolid(i+1,j,k)
 					else if(marker(i-1,j,k) == SOLIDCELL)	//If cell(i-1,j,k) remove u(i-1/2,j,k)

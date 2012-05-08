@@ -80,14 +80,18 @@ CStopWatch stopwatch;
 
 int numframes;
 double avgtime = 0;
-int main(void)
+
+
+
+
+void
+runFluidSim()
 {
 	Fluid_Solver fluid_solver(dimx,dimy,dimz,0.1,1.0f/30.0f,9.82f,1.0f,Nparticles);
 	fluid_solver.init_box();
 
 	OpenGl_initViewer(600, 600,fluid_solver.grid);
-	OpenGl_initParticles(fluid_solver.particles.pos, fluid_solver.particles.vel, sizeof(vec3f)*fluid_solver.particles.currnp, fluid_solver.particles.currnp);
-	
+	OpenGl_initParticles(&fluid_solver.particles.pos[0], &fluid_solver.particles.vel[0], sizeof(vec3f)*fluid_solver.particles.currnp, fluid_solver.particles.currnp);	
 	
 	int Nvoxels = dimx*dimy*dimz;
 	Array3f voxelFlags(dimx,dimy,dimz);	
@@ -112,8 +116,7 @@ int main(void)
 		}
 
 		OpenGl_drawAndUpdate(running);
-	
-		
+
 		if(step || play)
 		{
 			
@@ -126,14 +129,13 @@ int main(void)
 // 				avgtime += stopwatch.getElapsedTime();
 // 			numframes++;
 			
-		//	write_paricle_pos_binary(fluid_solver.particles);
+			//write_paricle_pos_binary(fluid_solver.particles);
 
 			//fluid_solver.createSurface();
 			//openGl_setMesh(fluid_solver.tri,fluid_solver.nrofTriangles);
 		}
 
-		OpenGl_updateParticleLocation(fluid_solver.particles.pos, sizeof(vec3f)*fluid_solver.particles.currnp);
-		OpenGl_updateParticleVelocity(fluid_solver.particles.vel,sizeof(vec3f)*fluid_solver.particles.currnp);
+		OpenGl_updateParticles(fluid_solver.particles);
 	}
 	
 
@@ -142,10 +144,18 @@ int main(void)
 // 	std::cout << "Avg. time" << avgtime/(numframes-6) << "\n";
 // 	std::cout << "Press any key to quit...\n";
 //	std::cin.get();
+}
 
-	
 
+
+
+
+int main(void)
+{
 	
+	runFluidSim();
+	
+	//runSurfaceReconstrunction();
 	
 	return 0;
 }
