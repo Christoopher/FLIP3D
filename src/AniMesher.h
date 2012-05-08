@@ -291,6 +291,25 @@ void createPhi(Particles & p, vec3f * smoothpos, armaMat * Gs, const int Nx, con
 
 void createPhi(Particles & p, vec3f * smoothpos, armaMat * Gs, const int Nx, const int Ny, const int Nz, const float h, mp4Vector * phi)
 {
+
+	Array3c marker;
+	marker.init(Nx,Ny,Nz);
+
+	std::cout << "Build marker grid\n";
+	#pragma omp parallel for
+	for(int n = 0; n < p.currnp; ++n)
+	{
+		int i = floor(p.pos[n][0]/h);
+		int j = floor(p.pos[n][1]/h);
+		int k = floor(p.pos[n][2]/h);
+
+		marker(i,j,k) = FLUIDCELL;
+	}
+
+		CStopWatch stopwatch;
+	stopwatch.startTimer();
+
+	std::cout << "Buildlevelset\n";
 #pragma omp parallel for
 	for(int k = 1; k < Nz-1; ++k)
 	{
@@ -298,16 +317,33 @@ void createPhi(Particles & p, vec3f * smoothpos, armaMat * Gs, const int Nx, con
 		{
 			for(int i = 1; i < Nx-1; ++i)
 			{
-				int phioffset = i-1 + (Nx-2)*(j-1 + (Ny-2)*(k-1));
-				phi[phioffset].x = i*h;
-				phi[phioffset].y = j*h;
-				phi[phioffset].z = k*h;
-				getPhi(p,Gs,smoothpos,phi[phioffset]);
-			}
-			std::cout << "Y = " << j << "\n";
-		}
-		std::cout << "Z = " << k << "\n";
+				if(	marker(i,j,k) == FLUIDCELL || 
+					marker(i-1,j,k) == FLUIDCELL || marker(i+1,j,k) == FLUIDCELL || 
+					marker(i,j-1,k) == FLUIDCELL || marker(i,j+1,k) == FLUIDCELL || 
+					marker(i,j,k-1) == FLUIDCELL || marker(i,j,k+1) == FLUIDCELL ||
+					marker(i+1,j+1,k+1) == FLUIDCELL || marker(i-1,j-1,k-1) == FLUIDCELL
+				)		
+				{
+					int phioffset = i-1 + (Nx-2)*(j-1 + (Ny-2)*(k-1));
+					phi[phioffset].x = i*h;
+					phi[phioffset].y = j*h;
+					phi[phioffset].z = k*h;
+					getPhi(p,Gs,smoothpos,phi[phioffset]);
+				}
+				else
+				{
+					int phioffset = i-1 + (Nx-2)*(j-1 + (Ny-2)*(k-1));
+					phi[phioffset].x = i*h;
+					phi[phioffset].y = j*h;
+					phi[phioffset].z = k*h;
+					phi[phioffset].val = 0.0;
+				}
+			}	
+		}	
 	}
+	stopwatch.stopTimer();
+	std::cout << std::scientific;
+	std::cout << stopwatch.getElapsedTime() << "\n";
 }
 
 /*void createSimplePhi(Particles & p, const int Nx, const int Ny, const int Nz, const float h, mp4Vector * phi)
