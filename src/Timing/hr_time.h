@@ -1,3 +1,6 @@
+#ifndef STOP_WATCH_H
+#define STOP_WATCH_H
+
 #include <windows.h>
 
 typedef struct {
@@ -17,3 +20,5 @@ public:
 	void stopTimer( );
 	double getElapsedTime();
 };
+
+#endif

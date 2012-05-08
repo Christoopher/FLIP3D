@@ -77,10 +77,10 @@ void initLevelset(int dim, float r)
 }
 */
 
-CStopWatch stopwatch;
+//CStopWatch stopwatch;
 
 int numframes;
-double avgtime = 0;
+double avgtime = 24;
 
 
 
@@ -191,7 +191,7 @@ int main(void)
 {
 	//runFluidSim();
 	
-	runSurfaceReconstruction(20); //Read specific frame
+	runSurfaceReconstruction(0); //Read specific frame
 	
 	return 0;
 }

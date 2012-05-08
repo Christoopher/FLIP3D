@@ -29,6 +29,10 @@
 
 
 
+#include "AniMesher.h"
+
+
+
 TRIANGLE * meshTriangles;
 int numOfTriangles;
 
@@ -445,11 +449,14 @@ void DrawMesh()
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 
+	
 	glBegin(GL_TRIANGLES);
 	for(int i=0; i < numOfTriangles; i++){
-		glNormal3f(meshTriangles[i].norm.x, meshTriangles[i].norm.y, meshTriangles[i].norm.z);
 		for(int j=0; j < 3; j++)	
+		{
+			glNormal3f(meshTriangles[i].norm.x, meshTriangles[i].norm.y, meshTriangles[i].norm.z);
 			glVertex3f(meshTriangles[i].p[j].x,meshTriangles[i].p[j].y,meshTriangles[i].p[j].z);
+		}
 	}
 	glEnd();
 }
@@ -563,6 +570,18 @@ void GLFWCALL KeyboardFunc( int key, int action )
 		down_is_down = true;
 	if(key == GLFW_KEY_DOWN  && action == GLFW_RELEASE)
 		down_is_down = false;
+
+	if(key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
+	{
+		isovalue += 2;
+		std::cout << "iso: " << isovalue << "\n";
+	}
+
+	if(key == GLFW_KEY_LEFT && action == GLFW_PRESS)
+	{
+		std::cout << "iso: " << isovalue << "\n";
+		isovalue -= 2;
+	}
 
 	
 

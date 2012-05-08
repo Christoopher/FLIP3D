@@ -66,9 +66,9 @@ void Fluid_Solver::init_box()
 	float r1,r2,r3;
 	float subh = grid.h/2.0f;
 	vec3f pos(0);
-	for(float k = 17; k < 25; ++k)
-		for(float j = 20; j < 31; ++j)
-			for(float i = 17; i < 25; ++i)
+	for(float k = 15; k < 25; ++k)
+		for(float j = 15; j < 25; ++j)
+			for(float i = 15; i < 25; ++i)
 			{
 				for (int kk = -1; kk < 1; ++kk)
 					for(int jj = -1; jj < 1; ++jj)
