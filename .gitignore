@@ -49,3 +49,9 @@ _ReSharper*/
 
 #NuGet
 packages/
+
+
+#no rar,zip or dat
+*.dat
+*.rar
+*.zip
