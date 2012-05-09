@@ -165,9 +165,12 @@ runSurfaceReconstruction(int frame)
 	while(running) {
 
 		
-		/*if(reset)
-			fluid_solver.reset();
-		reset = false;*/
+		if(reset)
+		{
+			std::cout << "setting changed: press \'s\' to genereate surface \n";
+			calcmesh = true;
+		}
+		reset = false;
 
 		OpenGl_drawAndUpdate(running);
 
@@ -191,7 +194,7 @@ int main(void)
 {
 	//runFluidSim();
 	
-	runSurfaceReconstruction(0); //Read specific frame
+	runSurfaceReconstruction(1); //Read specific frame
 	
 	return 0;
 }

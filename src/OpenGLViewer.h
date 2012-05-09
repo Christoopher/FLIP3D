@@ -440,11 +440,11 @@ void DrawMesh()
 	glUniformMatrix4fv(mesh_ProjectionMtxLocation, 1, GL_FALSE, transformPipeline.GetProjectionMatrix());
 
 	//KOM IHÅG ATT SÄTTA lightpos
-	
-
 	float lightpos0[4]={10.0f, 0.0f, 0.0f, 1.0f};  
-
 	glLightfv(GL_LIGHT0, GL_POSITION, lightpos0);
+
+
+
 
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
@@ -496,7 +496,6 @@ void OpenGl_drawAndUpdate(bool &running)
 	modelViewMatrix.Translate(posDx,posDy,zoom);
 	modelViewMatrix.Rotate(-rotDx,1.0f,0.0f,0.0f);
 	modelViewMatrix.Rotate(-rotDy,0.0f,1.0f,0.0f);
-
 	modelViewMatrix.Translate(-Nx*0.5f*h,-Ny*0.5f*h,-Nz*0.5f*h);
 
 	
@@ -571,17 +570,106 @@ void GLFWCALL KeyboardFunc( int key, int action )
 	if(key == GLFW_KEY_DOWN  && action == GLFW_RELEASE)
 		down_is_down = false;
 
+
+	// CHANGE ISOVALUE IN ANIMESHER
 	if(key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
 	{
-		isovalue += 2;
+		float val = 0.1;
+		if(glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS)
+			val = 1.0;
+		isovalue += val;
 		std::cout << "iso: " << isovalue << "\n";
 	}
 
 	if(key == GLFW_KEY_LEFT && action == GLFW_PRESS)
 	{
+		float val = 0.1;
+		if(glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS)
+			val = 1.0;
+		isovalue -= val;
 		std::cout << "iso: " << isovalue << "\n";
-		isovalue -= 2;
 	}
+	///////////////////////////////////
+
+	/*
+	kr = 4.0;	
+	kspecial = 0.8;	//(1-kn) -> Hur mycket i procent får egenvärdena skilja sig i axlarna.
+	kn = 1.0;
+	H = 0.5;
+	*/
+
+	if(key == 'B' && action == GLFW_PRESS)
+	{	
+		if(glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS)
+			kr += 0.5;
+		else
+			kr -= 0.5;
+
+		std::cout << "kr = " << kr << "\n";
+	}
+
+	if(key == 'M' && action == GLFW_PRESS)
+	{	
+		if(glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS)
+			amp += 0.1;
+		else
+			amp -= 0.1;
+
+		std::cout << "amp = " << amp << "\n";
+	}
+
+	if(key == 'V' && action == GLFW_PRESS)
+	{	
+		if(glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS)
+			H += 0.1;
+		else
+			H -= 0.1;
+
+		std::cout << "H = " << H << "\n";
+	}
+
+	if(key == 'N' && action == GLFW_PRESS)
+	{	
+		if(glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS)
+			kn += 0.1;
+		else
+			kn -= 0.1;
+
+		std::cout << "kn = " << H << "\n";
+	}
+
+	if(key == 'N' && action == GLFW_PRESS)
+	{	
+		if(glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS)
+			kn += 0.1;
+		else
+			kn -= 0.1;
+
+		std::cout << "kn = " << kn << "\n";
+	}
+
+	if(key == 'K' && action == GLFW_PRESS)
+	{	
+		if(glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS)
+			kspecial += 0.1;
+		else
+			kspecial -= 0.1;
+
+		std::cout << "kspecial = " << kspecial << "\n";
+	}
+
+
+	if(key == 'L' && action == GLFW_PRESS)
+	{	
+
+		std::cout << "H = " << H << ": key \'V\'\n";
+		std::cout << "kn = " << kn << ": key \'N\'\n";
+		std::cout << "kr = " << kr << ": key \'B\'\n";
+		std::cout << "amp = " << amp  << ": key \'B\'\n";
+		std::cout << "kspecial = " << kspecial <<  ": key \'K\'\n";
+	}
+
+
 
 	
 
