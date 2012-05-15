@@ -147,6 +147,129 @@ runFluidSim()
 //	std::cin.get();
 }
 
+
+struct IFL
+{
+	struct Tri
+	{
+		int i,j,k;
+		vec3f norm;
+	};
+
+	struct Normal
+	{
+		Normal() : n(0) {}
+		vec3f norm;
+		int n;
+	};
+
+	std::vector<Tri> tris;
+	std::vector<Normal> normals;
+	std::vector<vec3f> vecs;
+
+	int insertPoint(vec3f & v)
+	{
+		int i;
+		for(i = 0; i < vecs.size(); ++i)
+		{
+			if(v == vecs[i])
+				return i;
+		}
+		vecs.push_back(v);
+		return i;
+	}
+
+	void init(TRIANGLE * t, int n)
+	{
+		for(int i = 0; i < n; ++i)
+		{
+			vec3f v1(t[i].p[0].x,t[i].p[0].y,t[i].p[0].z);
+			vec3f v2(t[i].p[1].x,t[i].p[1].y,t[i].p[1].z);
+			vec3f v3(t[i].p[2].x,t[i].p[2].y,t[i].p[2].z);
+
+
+
+			Tri tri;
+			tri.i = insertPoint(v1);
+			tri.j = insertPoint(v2);
+			tri.k = insertPoint(v3);
+			tri.norm = vec3f(t[i].norm.x,t[i].norm.y, t[i].norm.z);
+			tris.push_back(tri);
+
+		}
+
+		std::cout << "Inserted " << vecs.size() << " unique points from " << n*3 << "original points\n";
+		calcNormals();
+	}
+
+	void
+	calcNormals()
+	{
+		normals.resize(vecs.size());
+		for(int i = 0; i < tris.size(); ++i)
+		{
+			normals[tris[i].i].norm += vecs[tris[i].i];
+			++normals[tris[i].i].n;
+			
+			normals[tris[i].j].norm += vecs[tris[i].j];
+			++normals[tris[i].j].n;
+
+			normals[tris[i].k].norm += vecs[tris[i].k];
+			++normals[tris[i].k].n;
+		}
+
+		for(int i = 0; i < normals.size(); ++i)
+		{
+			normals[i].norm /= normals[i].n;
+			normals[i].norm /= mag(normals[i].norm);
+		}
+
+	}
+};
+
+void
+writeObj(TRIANGLE * tri, int & ntriangles)
+{
+	
+
+	IFL ifl;
+	ifl.init(tri,ntriangles);
+
+
+	std::ofstream file;
+	file.open ("mesh.obj");
+
+	//Print points
+	for(int i = 0; i < ifl.vecs.size(); ++i)
+	{
+		file << "v " << ifl.vecs[i][0] << ' ' << ifl.vecs[i][1] << ' ' << ifl.vecs[i][2] << "\n";
+	}
+	
+	file << "\n";
+
+	//Print normals
+	for(int i = 0; i < ifl.vecs.size(); ++i)
+	{
+		file << "vn " << ifl.normals[i].norm[0] << ' ' << ifl.normals[i].norm[1] << ' ' << ifl.normals[i].norm[2] << "\n";
+		
+	}
+	
+	file << "\n";
+
+	//print vecs
+	for(int i = 0; i < ifl.tris.size(); ++i)
+	{
+		file << "f ";
+		file << ifl.tris[i].i+1 << "\\\\" << ifl.tris[i].i+1 << ' ';
+		file << ifl.tris[i].j+1 << "\\\\" << ifl.tris[i].j+1 << ' ';
+		file << ifl.tris[i].k+1 << "\\\\" << ifl.tris[i].k+1 << ' ';
+		file << "\n";
+	}
+
+	file.close();
+	std::cin.get();
+}
+
 void
 runSurfaceReconstruction(int frame)
 {
@@ -183,18 +306,16 @@ runSurfaceReconstruction(int frame)
 		}
 	}
 	
-
+	writeObj(tri,nrofTriangles);
 	TerminateViewer();
 
 }
-
-
 
 int main(void)
 {
 	//runFluidSim();
 	
-	runSurfaceReconstruction(1); //Read specific frame
+	runSurfaceReconstruction(0); //Read specific frame
 	
 	return 0;
 }
