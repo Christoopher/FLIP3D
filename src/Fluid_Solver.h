@@ -66,9 +66,9 @@ void Fluid_Solver::init_box()
 	float r1,r2,r3;
 	float subh = grid.h/2.0f;
 	vec3f pos(0);
-	for(float k = 15; k < 25; ++k)
-		for(float j = 15; j < 25; ++j)
-			for(float i = 15; i < 25; ++i)
+	for(float k = 1; k < 31; ++k)
+		for(float j = 1; j < 5; ++j)
+			for(float i = 1; i < 31; ++i)
 			{
 				for (int kk = -1; kk < 1; ++kk)
 					for(int jj = -1; jj < 1; ++jj)
@@ -167,19 +167,34 @@ void Fluid_Solver::step_frame()
 void Fluid_Solver::step(float dt)
 {
 
+
+
 	//grid.extend_velocity();
 	for (int i = 0; i < 5; i++)
 		move_particles_in_grid(particles,grid,0.2*dt);
 
 	grid.zero();
 
+
 	grid.classify_voxel();
+
+	#ifdef SOLIDS
+		testMesh.move(dt);
+		//testMesh2.move(dt);
+	#endif
+
 #ifdef SOLIDS
 	testMesh.mesh_to_grid(grid);
-	testMesh2.mesh_to_grid(grid);
+	//testMesh2.mesh_to_grid(grid);
 #endif
 
 	transfer_to_grid(particles,grid);
+
+#ifdef SOLIDS
+	testMesh.mesh_to_grid(grid);
+	//testMesh2.mesh_to_grid(grid);
+#endif
+
 	grid.save_velocities();
 	grid.add_gravity(dt);
 

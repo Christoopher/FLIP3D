@@ -428,7 +428,7 @@ void DrawSolidVoxels()
 	glPointSize(0.1);
 
 	testMesh.draw();
-	testMesh2.draw();
+	//testMesh2.draw();
 }
 
 void DrawMesh()
@@ -770,8 +770,9 @@ void OpenGl_initViewer(int width_, int height_, const int dimx_, const int dimy_
 	cameraFrame.SetOrigin(0.0f,0.0f,10.0);
 
 #ifdef SOLIDS
-	testMesh.init("cube10.obj", vec3f(23,-1,33) , h);
-	testMesh2.init("cube10.obj", vec3f(0,-1,9) , h);
+	//testMesh.init("cube10.obj", vec3f(35,-1,33),vec3f(0.0.0f,20.0f,0.0f) , h);
+	testMesh.init("cube10.obj", vec3f(15,-10,15),vec3f(0.0f,1.0f,0.0f) , h);
+	//testMesh2.init("cube10.obj", vec3f(0,-1,9), vec3f(0.0f) , h);
 #endif
 
 }

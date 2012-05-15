@@ -106,7 +106,7 @@ void move_particles_in_grid(Particles & particles, Grid & grid, float dt)
 		//Move particle one step with forward euler
 		if(grid.marker(ui,vj,wk) == SOLIDCELL)
 		{
-			std::cout << "particle in solid voxel: [" << ui << "," << vj << "," << wk << "]\n";
+			//std::cout << "particle in solid voxel: [" << ui << "," << vj << "," << wk << "]\n";
 			continue;
 		}
 
@@ -120,6 +120,9 @@ void move_particles_in_grid(Particles & particles, Grid & grid, float dt)
 		grid.bary_x(newpos[0], ui, ufx);		
 		grid.bary_y(newpos[1], vj, vfy);		
 		grid.bary_z(newpos[2], wk, wfz);
+
+		if(ui < 0 || vj < 0 || wk < 0)
+			continue;
 
 		//Push particle out
 		float scale = 1.0;
@@ -183,7 +186,7 @@ void move_particles_in_grid(Particles & particles, Grid & grid, float dt)
 		//if surrounded by solid
 		if(!moveZ && !moveY && !moveX)
 		{
-			std::cout << "could not move particle\n";
+			//std::cout << "could not move particle\n";
 			newpos = particles.pos[p];
 		}
 		else
@@ -292,7 +295,7 @@ void transfer_to_grid(Particles & particles, Grid & grid)
 
 		if(grid.marker(ui,vj,wk) == SOLIDCELL)
 		{
-			std::cout << "solid particle in transf2grid.. removign...\n";
+			//std::cout << "solid particle in transf2grid.. removign...\n";
 #if NDEBUG
 			removeIndices[omp_get_thread_num()].push_back(p);
 #else
@@ -302,9 +305,7 @@ void transfer_to_grid(Particles & particles, Grid & grid)
 		}
 		else
 			grid.marker(ui,vj,wk) = FLUIDCELL;
-
-
-
+		
 
 		grid.bary_y_centre(particles.pos[p][1],j,fy);
 		grid.bary_z_centre(particles.pos[p][2],k,fz);

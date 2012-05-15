@@ -54,36 +54,10 @@ void update_voxel_flags(Grid & grid, Array3f & flags)
 }
 
 
-/*
-void initLevelset(int dim, float r)
-{
-	srand(int(time(NULL)));
-	//levelset.resize(dim*dim*dim);
-	levelset = new mp4Vector[dim*dim*dim];
-	float center = dim/2.0f + 0.5f;
-	for(int k = 0; k < dim; ++k)
-		for(int j = 0; j < dim; ++j)
-			for(int i = 0; i < dim; ++i)
-			{
-				float dx = (center - i);
-				float dy = (center - j);
-				float dz = (center - k);
-				float dist = sqrtf( dx*dx + dy*dy + dz*dz )/dim;
-				mp4Vector vert(10*float(i-center)/dim, 10*float(j-center)/dim,10*float(k-center)/dim,0);
-				vert.val = r-dist;
-				int off = i + dim*(j + dim *k);
-				levelset[off] = vert; //Negative on the inside	
-			}
-}
-*/
-
 //CStopWatch stopwatch;
 
 int numframes;
 double avgtime = 24;
-
-
-
 
 void
 runFluidSim()
@@ -313,9 +287,9 @@ runSurfaceReconstruction(int frame)
 
 int main(void)
 {
-	//runFluidSim();
+	runFluidSim();
 	
-	runSurfaceReconstruction(0); //Read specific frame
+	//runSurfaceReconstruction(0); //Read specific frame
 	
 	return 0;
 }

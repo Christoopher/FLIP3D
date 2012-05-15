@@ -8,20 +8,18 @@
 
 struct SolidMesh
 {
-	SolidMesh()
-	{
-		
-	}
-	SolidMesh(std::string filename, vec3f pos, float h) : position(pos)
+	SolidMesh() {}
+	SolidMesh(std::string filename, vec3f pos, float h) : position(pos) , velocity(0.0)
 	{
 		mesh = LoadObjMesh(filename);		
 	}
 
-	void init(std::string filename, vec3f pos, float h)
+	void init(std::string filename, vec3f pos, vec3f vel, float h)
 	{
 		mesh = LoadObjMesh(filename);
 		scale = h;
 		position = pos;
+		velocity = vel;
 		seed_random_points(h);
 	}
 
@@ -35,23 +33,28 @@ struct SolidMesh
 			vec3f pos = itr->vertices->pos;
 			pos += position;
 
-			/*
-			//check x
-			if(pos[0] < 0.0 || pos[0] > grid.h * grid.Nx)
-				continue;
-			//check y
-			if(pos[1] < 0.0 || pos[1] > grid.h * grid.Ny)
-				continue;
-			//check z
-			if(pos[2] < 0.0 || pos[2] > grid.h * grid.Nz)
-				continue;
-			*/
+					
 
 			i = floor(pos[0]);
 			j = floor(pos[1]);
 			k = floor(pos[2]);
 
+			//check x
+			if(i < 0 || i > grid.Nx-1 )
+				continue;
+			//check y
+			//check x
+			if(j < 0 || j > grid.Ny-1 )
+				continue;
+			//check z
+			//check x
+			if(k < 0 || k > grid.Nz-1 )
+				continue;
+
 			grid.marker(i,j,k) = SOLIDCELL;
+			grid.u(i,j,k) = grid.u(i+1,j,k) = velocity[0];
+			grid.v(i,j,k) = grid.v(i,j+1,k) = velocity[1];
+			grid.w(i,j,k) = grid.w(i,j,k+1) = velocity[2];
 		}
 
 		int shrinks = 10;
@@ -64,22 +67,27 @@ struct SolidMesh
 				vec3f pos(*itr2*shrinkage);
 				pos += position;
 	
-				/*
-				//check x
-				if(pos[0] < 0.0 || pos[0] > grid.h * grid.Nx)
-					continue;
-				//check y
-				if(pos[1] < 0.0 || pos[1] > grid.h * grid.Ny)
-					continue;
-				//check z
-				if(pos[2] < 0.0 || pos[2] > grid.h * grid.Nz)
-					continue;
-				*/
 				i = floor(pos[0]);
 				j = floor(pos[1]);
 				k = floor(pos[2]);
+
+				//check x
+				if(i < 0 || i > grid.Nx )
+					continue;
+				//check y
+				//check x
+				if(j < 0 || j > grid.Ny )
+					continue;
+				//check z
+				//check x
+				if(k < 0 || k > grid.Nz )
+					continue;
+
 		
 				grid.marker(i,j,k) = SOLIDCELL;
+				grid.u(i,j,k) = grid.u(i+1,j,k) = velocity[0];
+				grid.v(i,j,k) = grid.v(i,j+1,k) = velocity[1];
+				grid.w(i,j,k) = grid.w(i,j,k+1) = velocity[2];
 			}
 			shrinkage *= (1.0 - scale);
 		}
@@ -167,10 +175,18 @@ struct SolidMesh
 		glFlush();
 	}
 
+	void
+	move(const float &dt)
+	{
+		position += dt*velocity;
+	}
+
 	ObjMesh mesh;
 	vec3f position;
+	vec3f velocity;
 	float scale;
 	std::vector<vec3f> randomPoints;
+
 	
 };
 

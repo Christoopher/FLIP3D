@@ -392,20 +392,6 @@ void Grid::project(float dt)
 					w(i,j,k+1) = 0.0f;
 				}
 				*/
-				/*else if (marker(i,j,k) == SOLIDCELL)
-					{
-						val = scale * float(pressure(i,j,k));
-
-						u(i,j,k) -= val; u(i,j,k) *= 0.95;
-						u(i+1,j,k) += val; u(i+1,j,k) *= 0.95;
-
-						v(i,j,k) -= val; v(i,j,k)*= 0.95;
-						v(i,j+1,k) += val; v(i,j+1,k)*= 0.95;
-
-						w(i,j,k) -= val; w(i,j,k)*= 0.95;
-						w(i,j,k+1) += val; w(i,j,k+1)*= 0.95;
-
-					}*/
 			}
 }
 
@@ -418,7 +404,7 @@ void Grid::calc_divergence()
 {
 	double scale = 1.0/h;
 
-	/*
+#pragma omp parallel for shared(scale)
 	for(int k = 0; k < Nz; ++k)
 		for(int j = 0; j < Ny; ++j)
 			for(int i = 0; i < Nx; ++i)
@@ -431,6 +417,7 @@ void Grid::calc_divergence()
 
 
 				//Account for SOLID cells
+#pragma omp parallel for shared(scale)
 	for(int k = 0; k < Nz; ++k)
 	{
 		for(int j = 0; j < Ny; ++j)
@@ -463,8 +450,8 @@ void Grid::calc_divergence()
 				}
 			}
 		}
-	}*/
-
+	}
+/*
 	#pragma omp parallel for shared(scale)
 	for(int k = 0; k < Nz; ++k)
 		for(int j = 0; j < Ny; ++j)
@@ -496,7 +483,7 @@ void Grid::calc_divergence()
 					rhs(i,j,k) *= -scale;
 				}
 			}
-
+*/
 			
 }
 
