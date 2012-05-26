@@ -62,7 +62,7 @@ double avgtime = 24;
 void
 runFluidSim()
 {
-	Fluid_Solver fluid_solver(dimx,dimy,dimz,0.1,1.0f/30.0f,9.82f,1.0f,Nparticles);
+	Fluid_Solver fluid_solver(dimx,dimy,dimz,gridh,1.0f/30.0f,9.82f,1.0f,Nparticles);
 	fluid_solver.init_box();
 
 	OpenGl_initViewer(600, 600, dimx, dimy, dimz, gridh);
@@ -273,9 +273,7 @@ runSurfaceReconstruction(int frame)
 
 		if(step || play)
 		{
-			
-
-			mesh(particles,dimx, dimy, dimz, h, 1, nrofTriangles, tri);
+			mesh(particles,dimx, dimy, dimz, gridh, 2, nrofTriangles, tri);
 			openGl_setMesh(tri, nrofTriangles);
 		}
 	}
@@ -287,9 +285,9 @@ runSurfaceReconstruction(int frame)
 
 int main(void)
 {
-	runFluidSim();
+	//runFluidSim();
 	
-	//runSurfaceReconstruction(0); //Read specific frame
+	runSurfaceReconstruction(16); //Read specific frame
 	
 	return 0;
 }

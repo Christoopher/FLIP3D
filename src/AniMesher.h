@@ -24,12 +24,13 @@ typedef arma::vec armaVec;
 bool calcmesh = true;
 armaMat * Gs;
 vec3f * smoothPos;
+float * density;
 mp4Vector * phi;
 
-float isovalue = 2.1;
+float isovalue = 34;
+float ks = 1400;
 float kr = 4.0;	
-float kn = 0.5;
-float H = 0.5;
+float H = 0.05;
 float kspecial = 0.9;
 float amp = 1.0;
 
@@ -49,7 +50,7 @@ weightedPos(Particles & p, int i,float r, vec3f & xiW)
 	for (int j = 0; j < p.currnp; ++j) //alla andra partiklar
 	{
 		dr = dist(p.pos[i], p.pos[j])/r;
-		weighti = max(1.0 - dr*dr*dr,0.0);
+		weighti = max(1.0 - dr,0.0);            ///CHANGED THIS FROM max(1.0 - dr*dr*dr,0.0); 
 		weightsum += weighti;
 		sumweightpos += weighti*p.pos[j];
 	}
@@ -57,7 +58,7 @@ weightedPos(Particles & p, int i,float r, vec3f & xiW)
 }
 
 void 
-smoothParticles(const Particles & p, vec3f * smoothpos, float lam,float h)
+smoothParticles(const Particles & p,float *density, vec3f * smoothpos, float lam,float h)
 {
 	float weightsum;
 	float weighti;
@@ -79,6 +80,7 @@ smoothParticles(const Particles & p, vec3f * smoothpos, float lam,float h)
 			weightpos += weighti*p.pos[j];
 		}
 		smoothpos[i] = (1.0 - lam)*p.pos[i] + lam*weightpos/weightsum;
+		density[i] = weightsum;
 	}
 }
 
@@ -134,37 +136,44 @@ calcGi(const armaMat & Ci, armaMat & Gi)
 	armaVec eigenv; 
 	armaMat R, RT;
 	
-	float Cnorm = norm(Ci,"fro");
-	float ks = 1.0/Cnorm; // gives norm(ks*Ci) approx 1
+	
 
 	svd(R, eigenv, RT, Ci);
 	
-	bool adjust = false;
+	//float ks = 1.0/arma::norm(Ci,"inf");//1.0/eigenv(0); // gives norm(ks*Ci) approx 1
 	//Check if distribution is uniform
-	if(eigenv(2) <= eigenv(0)*kspecial) 
-	{		
+	//if(eigenv(2) <= eigenv(0)*kspecial) 
+	//{		
 		//Check if to much stretch
 		if(eigenv(0) >= kr*eigenv(2))
 		{
-			eigenv(0) = max(eigenv(0), eigenv(0)/ks);
-			eigenv(1) = max(eigenv(1), eigenv(0)/ks);
-			eigenv(2) = max(eigenv(2), eigenv(0)/ks);
-		}		
+			/*float alpha = ( kr*eigenv(2)) / (eigenv(0) + kr*eigenv(2));
+			float gamma = eigenv(1) / eigenv(0);
+			eigenv(1) *= gamma;
+			eigenv(0) *= alpha;
+			eigenv(2) *= (1.0f-alpha);*/
+			eigenv(0) = max(eigenv(0),eigenv(0)/kr);
+			eigenv(1) = max(eigenv(1),eigenv(0)/kr);
+			eigenv(2) = max(eigenv(2),eigenv(0)/kr);
+			//ks = 1.0/eigenv(0);
+		}
 
-		eigenv(0) = eigenv(0) *ks*H;
-		eigenv(1) = eigenv(1) *ks*H;
-		eigenv(2) = eigenv(2) *ks*H;
+		//eigenv(0) = eigenv(0);
+		//eigenv(1) = eigenv(1);
+		//eigenv(2) = eigenv(2);
 		
-	}
-	else
-		eigenv(0) = eigenv(1) = eigenv(2) = kn;
+	//}
+	//else
+	//	eigenv(0) = eigenv(1) = eigenv(2) = kn;
 
 	//inverse of eigenmatrix
-	eigenv(0) = 1.0/eigenv(0);
-	eigenv(1) = 1.0/eigenv(1);
-	eigenv(2) = 1.0/eigenv(2);
+	eigenv(0) = 1.0/(eigenv(0)*ks);
+	eigenv(1) = 1.0/(eigenv(1)*ks);
+	eigenv(2) = 1.0/(eigenv(2)*ks);
 
-	Gi = (1/H)*R*diagmat(eigenv)*trans(RT);
+	Gi = (1.0/(2.0*H))*R*diagmat(eigenv)*trans(RT);
+	
+
 	//matrixMultiplyToGetGi(eigenv, R, RT, Gi);
 }
 	
@@ -175,7 +184,7 @@ calcGi(const armaMat & Ci, armaMat & Gi)
 void 
 calcAniMatrices(Particles & p, armaMat * Gs)
 {
-	float r = 2.0*H;
+	float r = 2*H;
 #pragma omp parallel for
 	for (int i = 0; i < p.currnp; ++i) //i är den partikeln vi kollar på
 	{		
@@ -195,7 +204,7 @@ calcAniMatrices(Particles & p, armaMat * Gs)
 }
 
 void 
-getPhi(Particles & p, armaMat * G, vec3f * smoothPos, mp4Vector & point)
+getPhi(Particles & p, armaMat * G,float *density ,vec3f * smoothPos, mp4Vector & point)
 {
 	point.val = 0.0;
 	float sum = 0.0;
@@ -214,53 +223,21 @@ getPhi(Particles & p, armaMat * G, vec3f * smoothPos, mp4Vector & point)
 		Gr[2] = G[i](2,0)*r[0] + G[i](2,1)*r[1] + G[i](2,2)*r[2];
 
 		Grnorm = mag(Gr);	
+		//std::cout << "rnorm: " << mag(r) << "\n";
+		//std::cout << "Grnorm: " << Grnorm << "\n\n";
 
 		//Get norm (i.e. max) of G
 		Gnorm = norm(G[i],"inf");
-		/*for(int n = 0; n < 3; ++n)
-		{
-			for(int m = 0; m<3; ++m)
-			{
-			    if(G[i](n,m) > Gnorm) //WE assume that G has only positive entries
-					Gnorm = G[i](n,m);
-			}  
-		}*/
 
 		float gg = Grnorm*Grnorm;
 		float P = max((1.0-gg)*(1.0-gg)*(1.0-gg),0.0);
-		sum += Gnorm * P * amp;
+		sum += (1.0/density[i])*Gnorm * P * amp;
 	}
 
 	point.val = sum;
-#if (DEBUG)
-	if(point.val > 0)
-		std::cout << "[" << point.x << "," << point.y << "," << point.z << "] : " << point.val << "\n";
-#endif
 }
-
-void 
-getSimplePhi(Particles & p, mp4Vector & point)
-{
-	vec3f x, point_;
-	point_[0] = point.x; point_[1] = point.y; point_[2] = point.z; 
-
-	float magni, s, ss, wi, r = 0.0, wi_den, R = 0.5, ri = 0.1;
-	point.val = 0.0;
-
-	for(int i = 0; i < p.currnp; ++i)
-	{
-		s = mag(point_ - p.pos[i])/R;
-		ss = s*s;
-		wi += max(0.0, (1.0 - ss)*(1.0 - ss)*(1.0 - ss));
-	}
-
-	r = wi*ri;
-	x = wi*point_;
-	point.val = mag(point_ - x) - r;
-}
-
 void
-createPhi(Particles & p, vec3f * smoothpos, armaMat * Gs, const int Nx, const int Ny, const int Nz, const float h, mp4Vector * phi)
+createPhi(Particles & p, vec3f * smoothpos,float * density, armaMat * Gs, const int Nx, const int Ny, const int Nz, const float h, mp4Vector * phi)
 {
 
 	Array3c marker;
@@ -289,18 +266,115 @@ createPhi(Particles & p, vec3f * smoothpos, armaMat * Gs, const int Nx, const in
 			for(int i = 1; i < Nx-1; ++i)
 			{
 				
-				if(	marker(i,j,k) == FLUIDCELL || 
+				/*if(	marker(i,j,k) == FLUIDCELL || 
 					marker(i-1,j,k) == FLUIDCELL || marker(i+1,j,k) == FLUIDCELL || 
 					marker(i,j-1,k) == FLUIDCELL || marker(i,j+1,k) == FLUIDCELL || 
 					marker(i,j,k-1) == FLUIDCELL || marker(i,j,k+1) == FLUIDCELL ||
 					marker(i+1,j+1,k+1) == FLUIDCELL || marker(i-1,j-1,k-1) == FLUIDCELL
 				)		
+				{*/
+					int phioffset = i-1 + (Nx-2)*(j-1 + (Ny-2)*(k-1));
+					phi[phioffset].x = (i)*h;
+					phi[phioffset].y = (j)*h;
+					phi[phioffset].z = (k)*h;
+					getPhi(p,Gs,density,smoothpos,phi[phioffset]);
+					//std::cout << "isovalue: " << phi[phioffset].val << "\n";
+				/*}
+				else
 				{
 					int phioffset = i-1 + (Nx-2)*(j-1 + (Ny-2)*(k-1));
-					phi[phioffset].x = (i+0.5)*h;
-					phi[phioffset].y = (j+0.5)*h;
-					phi[phioffset].z = (k+0.5)*h;
-					getPhi(p,Gs,smoothpos,phi[phioffset]);
+					phi[phioffset].x = (i)*h;
+					phi[phioffset].y = (j)*h;
+					phi[phioffset].z = (k)*h;
+					phi[phioffset].val = -10000;
+					//std::cout << "isovalue: " << phi[phioffset].val << "\n";
+				}
+				*/
+			}	
+		}	
+	}
+	stopwatch.stopTimer();
+	std::cout << std::scientific;
+	std::cout << stopwatch.getElapsedTime() << "\n";
+}
+
+void 
+getSimplePhi2(Particles & p,armaMat * G, mp4Vector & point)
+{
+	vec3f x, point_;
+	point_[0] = point.x; point_[1] = point.y; point_[2] = point.z; 
+
+	float s, ss, wi, R = 1.0, weightsum = 0.0f;
+	point.val = 0.0;
+
+	for(int i = 0; i < p.currnp; ++i)
+	{
+		float Gnorm, Grnorm;
+		vec3f Gr, r;
+		r = point_ - p.pos[i];
+
+		Gr[0] = G[i](0,0)*r[0] + G[i](0,1)*r[1] + G[i](0,2)*r[2];
+		Gr[1] = G[i](1,0)*r[0] + G[i](1,1)*r[1] + G[i](1,2)*r[2];
+		Gr[2] = G[i](2,0)*r[0] + G[i](2,1)*r[1] + G[i](2,2)*r[2];
+		
+		Gnorm = norm(G[i],"inf");
+		Grnorm = mag(Gr);
+		std::cout << "r: " << mag(r) << "\n";
+		std::cout << "GrNorm: " << Grnorm << "\n";
+		s = Grnorm*Grnorm/R;
+		ss = s*s;
+		wi = max(0.0, (1.0 - ss)*(1.0 - ss)*(1.0 - ss));
+		x += point_*wi; //Averaged point
+		weightsum += wi;
+	}
+	float r = 0.1;
+	if(weightsum < 10e-7)
+	{
+		point.val = 1000.0;
+	}
+	else
+	{
+		x /= weightsum;
+		point.val = mag(point_ - x) - r;
+	}
+	std::cout << "isovalue: " << point.val << "\n";
+}
+void 
+createSimplePhi2(Particles & p, armaMat * G,const int Nx, const int Ny, const int Nz, const float h, mp4Vector * phi)
+{
+	Array3c marker;
+	marker.init(Nx,Ny,Nz);
+	vec3f phiPos; 
+	std::cout << "Build marker grid\n";
+#pragma omp parallel for
+	for(int n = 0; n < p.currnp; ++n)
+	{
+		int i = floor(p.pos[n][0]/h);
+		int j = floor(p.pos[n][1]/h);
+		int k = floor(p.pos[n][2]/h);
+
+		marker(i,j,k) = FLUIDCELL;
+	}
+
+	std::cout << "Buildlevelset\n";
+#pragma omp parallel for
+	for(int k = 1; k < Nz-1; ++k)
+	{
+		for(int j = 1; j < Ny-1; ++j)
+		{
+			for(int i = 1; i < Nx-1; ++i)
+			{
+				if(	marker(i,j,k) == FLUIDCELL || 
+					marker(i-1,j,k) == FLUIDCELL || marker(i+1,j,k) == FLUIDCELL || 
+					marker(i,j-1,k) == FLUIDCELL || marker(i,j+1,k) == FLUIDCELL || 
+					marker(i,j,k-1) == FLUIDCELL || marker(i,j,k+1) == FLUIDCELL ||
+					marker(i+1,j+1,k+1) == FLUIDCELL || marker(i-1,j-1,k-1) == FLUIDCELL)		
+				{
+					int phioffset = i-1 + (Nx-2)*(j-1 + (Ny-2)*(k-1));
+					phi[phioffset].x = phiPos[0] = (i+0.5)*h;
+					phi[phioffset].y = phiPos[1] = (j+0.5)*h;
+					phi[phioffset].z = phiPos[2] = (k+0.5)*h;
+					getSimplePhi2(p,Gs,phi[phioffset]);
 				}
 				else
 				{
@@ -310,14 +384,32 @@ createPhi(Particles & p, vec3f * smoothpos, armaMat * Gs, const int Nx, const in
 					phi[phioffset].z = (k+0.5)*h;
 					phi[phioffset].val = 0.0;
 				}
-			}	
-		}	
+			}
+		}
 	}
-	stopwatch.stopTimer();
-	std::cout << std::scientific;
-	std::cout << stopwatch.getElapsedTime() << "\n";
 }
 
+
+void 
+getSimplePhi(Particles & p, mp4Vector & point)
+{
+	vec3f x, point_;
+	point_[0] = point.x; point_[1] = point.y; point_[2] = point.z; 
+
+	float magni, s, ss, wi, r = 0.0, wi_den, R = 0.5, ri = 0.1;
+	point.val = 0.0;
+
+	for(int i = 0; i < p.currnp; ++i)
+	{
+		s = mag(point_ - p.pos[i])/R;
+		ss = s*s;
+		wi += max(0.0, (1.0 - ss)*(1.0 - ss)*(1.0 - ss));
+	}
+
+	r = wi*ri;
+	x = wi*point_;
+	point.val = mag(point_ - x) - r;
+}
 void 
 createSimplePhi(Particles & p, const int Nx, const int Ny, const int Nz, const float h, mp4Vector * phi)
 {
@@ -368,6 +460,7 @@ createSimplePhi(Particles & p, const int Nx, const int Ny, const int Nz, const f
 	}
 }
 
+
 void 
 initMeshData(int nParts, int Nx, int Ny, int Nz, int res)
 {
@@ -392,9 +485,16 @@ initMeshData(int nParts, int Nx, int Ny, int Nz, int res)
 		{
 			delete [] smoothPos;
 			smoothPos = new vec3f[nParts];
+
+			delete density;
+			density = new float[nParts];
+			
 		}
 		else
+		{
 			smoothPos = new vec3f[nParts];
+			density = new float[nParts];
+		}
 
 		if(Gs != NULL)
 		{
@@ -413,23 +513,26 @@ initMeshData(int nParts, int Nx, int Ny, int Nz, int res)
 }
 
 void 
-mesh(Particles & p, const int Nx, const int Ny, const int Nz, const float h, int res, int & numOfTriangles, TRIANGLE *& tri)
+mesh(Particles & p, const int Nx_, const int Ny_, const int Nz_, const float h_, int res, int & numOfTriangles, TRIANGLE *& tri)
 {
-	
+	int Nx = res*Nx_, Ny = res*Ny_, Nz = res*Nz_;
 	initMeshData(p.currnp, Nx, Ny, Nz, res);
+	float h = h_/(float)res;
 
 	if(calcmesh)
 	{
 		std::cout << "Started meshing\n";			
 		
-		std::cout << "Smooth particle positions\n";
-		smoothParticles(p, smoothPos,1.0, h);
+		//std::cout << "Smooth particle positions\n";
+		smoothParticles(p,density, smoothPos,0.9, h*0.5);
 
+		
 		std::cout << "Calculate Anisostropic matrices G\n";
 		calcAniMatrices(p,Gs);
 		
 		std::cout << "Create the levelset\n";
-		createPhi(p,smoothPos,Gs,Nx,Ny,Nz,h,phi);
+		createPhi(p,smoothPos,density,Gs,Nx,Ny,Nz,h,phi);
+		//createSimplePhi2(p,Gs,Nx,Ny,Nz,h,phi);
 	}
 
 	std::cout << "Run marching cubes\n";

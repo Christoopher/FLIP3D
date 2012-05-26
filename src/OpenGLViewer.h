@@ -64,6 +64,8 @@ bool up_is_down;
 bool down_is_down;
 SolidMesh testMesh, testMesh2;
 
+bool isokeyleft = false, isokeyright = false;
+
 //----------------------------------------------------------------------------//
 // Shaders
 //----------------------------------------------------------------------------//
@@ -467,6 +469,36 @@ void DrawMesh()
 
 void OpenGl_drawAndUpdate(bool &running)
 {
+	if(isokeyleft)
+	{
+		if(glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS)
+		{
+			if(glfwGetKey(GLFW_KEY_LCTRL) == GLFW_PRESS)
+				isovalue -= 10;
+			else
+				--isovalue;
+		}
+		else
+			isovalue -= 0.1;
+		std::cout << "iso: " << isovalue << "\n";
+	}
+	if(isokeyright)
+	{
+		if(glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS)
+		{
+			if(glfwGetKey(GLFW_KEY_LCTRL) == GLFW_PRESS)
+				isovalue += 10;
+			else
+				++isovalue;
+
+		}
+		else
+			isovalue += 0.1;
+		std::cout << "iso: " << isovalue << "\n";
+	}
+
+
+
 	//glEnable(GL_CULL_FACE);
 	glDepthFunc(GL_LESS);
 	glEnable(GL_DEPTH_TEST);
@@ -574,21 +606,24 @@ void GLFWCALL KeyboardFunc( int key, int action )
 	// CHANGE ISOVALUE IN ANIMESHER
 	if(key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
 	{
-		float val = 0.1;
-		if(glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS)
-			val = 1.0;
-		isovalue += val;
-		std::cout << "iso: " << isovalue << "\n";
+			isokeyright = true;
+	}
+	if(key == GLFW_KEY_RIGHT && action == GLFW_RELEASE)
+	{
+			isokeyright = false;
 	}
 
+	
 	if(key == GLFW_KEY_LEFT && action == GLFW_PRESS)
 	{
-		float val = 0.1;
-		if(glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS)
-			val = 1.0;
-		isovalue -= val;
-		std::cout << "iso: " << isovalue << "\n";
+			isokeyleft = true;
 	}
+	if(key == GLFW_KEY_LEFT && action == GLFW_RELEASE)
+	{
+			isokeyleft = false;
+	}
+
+
 	///////////////////////////////////
 
 	/*
@@ -628,7 +663,7 @@ void GLFWCALL KeyboardFunc( int key, int action )
 		std::cout << "H = " << H << "\n";
 	}
 
-	if(key == 'N' && action == GLFW_PRESS)
+	/*if(key == 'N' && action == GLFW_PRESS)
 	{	
 		if(glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS)
 			kn += 0.1;
@@ -646,7 +681,7 @@ void GLFWCALL KeyboardFunc( int key, int action )
 			kn -= 0.1;
 
 		std::cout << "kn = " << kn << "\n";
-	}
+	}*/
 
 	if(key == 'K' && action == GLFW_PRESS)
 	{	
@@ -663,7 +698,7 @@ void GLFWCALL KeyboardFunc( int key, int action )
 	{	
 
 		std::cout << "H = " << H << ": key \'V\'\n";
-		std::cout << "kn = " << kn << ": key \'N\'\n";
+		//std::cout << "kn = " << kn << ": key \'N\'\n";
 		std::cout << "kr = " << kr << ": key \'B\'\n";
 		std::cout << "amp = " << amp  << ": key \'B\'\n";
 		std::cout << "kspecial = " << kspecial <<  ": key \'K\'\n";
