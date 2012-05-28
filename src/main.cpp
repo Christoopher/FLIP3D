@@ -202,16 +202,18 @@ struct IFL
 };
 
 void
-writeObj(TRIANGLE * tri, int & ntriangles)
+writeObj(TRIANGLE * tri, int & ntriangles, int frameNr)
 {
-	
-
 	IFL ifl;
 	ifl.init(tri,ntriangles);
 
 
 	std::ofstream file;
-	file.open ("mesh.obj");
+	std::stringstream ss;
+	ss << "objs/mesh_" << frameNr << ".obj";
+	std::string filename;
+	ss >> filename;
+	file.open (filename);
 
 	//Print points
 	for(int i = 0; i < ifl.vecs.size(); ++i)
@@ -222,14 +224,14 @@ writeObj(TRIANGLE * tri, int & ntriangles)
 	file << "\n";
 
 	//Print normals
-	for(int i = 0; i < ifl.vecs.size(); ++i)
+	/*for(int i = 0; i < ifl.vecs.size(); ++i)
 	{
 		file << "vn " << ifl.normals[i].norm[0] << ' ' << ifl.normals[i].norm[1] << ' ' << ifl.normals[i].norm[2] << "\n";
 		
 	}
 	
 	file << "\n";
-
+	
 	//print vecs
 	for(int i = 0; i < ifl.tris.size(); ++i)
 	{
@@ -238,10 +240,16 @@ writeObj(TRIANGLE * tri, int & ntriangles)
 		file << ifl.tris[i].j+1 << "\\\\" << ifl.tris[i].j+1 << ' ';
 		file << ifl.tris[i].k+1 << "\\\\" << ifl.tris[i].k+1 << ' ';
 		file << "\n";
+	}*/
+	for(int i = 0; i < ifl.tris.size(); ++i)
+	{
+		file << "f ";
+		file << ifl.tris[i].i+1 << ' ';
+		file << ifl.tris[i].j+1 << ' ';
+		file << ifl.tris[i].k+1;
+		file << "\n";
 	}
-
 	file.close();
-	std::cin.get();
 }
 
 void
@@ -278,9 +286,39 @@ runSurfaceReconstruction(int frame)
 		}
 	}
 	
-	writeObj(tri,nrofTriangles);
+	writeObj(tri,nrofTriangles, frame);
 	TerminateViewer();
 
+}
+
+void
+runManySurfaceReconstructions(int frame_begin, int frame_end)
+{
+	Particles particles;
+	TRIANGLE * tri;
+	int nrofTriangles;
+
+	tri = new TRIANGLE[1];
+
+	for(int currFrame = frame_begin; currFrame <= frame_end; ++currFrame)
+	{
+		read_paricle_pos_binary(particles, currFrame);
+
+		//if(reset)
+		//{
+			std::cout << "setting changed: press \'s\' to genereate surface \n";
+			calcmesh = true;
+		//}
+		reset = false;
+
+		//if(step || play)
+		//{
+			mesh(particles,dimx, dimy, dimz, gridh, 2, nrofTriangles, tri);
+		//}
+		writeObj(tri,nrofTriangles, currFrame);
+		std::cout << "Wrote frame: " << currFrame << "\n\n\n";
+	}
+	
 }
 
 int main(void)
@@ -288,6 +326,7 @@ int main(void)
 	//runFluidSim();
 	
 	runSurfaceReconstruction(16); //Read specific frame
+	//runManySurfaceReconstructions(10, 40);
 	
 	return 0;
 }
