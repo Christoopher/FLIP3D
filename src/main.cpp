@@ -281,7 +281,7 @@ runSurfaceReconstruction(int frame)
 
 		if(step || play)
 		{
-			mesh(particles,dimx, dimy, dimz, gridh, 2, nrofTriangles, tri);
+			mesh(particles,dimx, dimy, dimz, gridh, 1, nrofTriangles, tri);
 			openGl_setMesh(tri, nrofTriangles);
 		}
 	}
@@ -325,7 +325,7 @@ int main(void)
 {
 	//runFluidSim();
 	
-	runSurfaceReconstruction(16); //Read specific frame
+	runSurfaceReconstruction(35); //Read specific frame
 	//runManySurfaceReconstructions(10, 40);
 	
 	return 0;

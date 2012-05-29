@@ -59,7 +59,7 @@ int filelength(const char *filename) {
 char* readShaderFile(const char *filename) 
 {
 	std::stringstream ss;
-	ss << "../../src/Shaders/" << filename;
+	ss << "../src/Shaders/" << filename;
 	std::string fullPath;
 	ss >> fullPath;
 
