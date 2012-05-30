@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <vector>
 #include <iterator>
+#include <limits>
 
 #include <time.h>
 #include "hr_time.h"
@@ -30,19 +31,20 @@ vec3f * smoothPos;
 float * density;
 mp4Vector * phi;
 
-float isovalue = 3.5;
-float ks = 1400;
+
+float isovalue = 0.06; //if simple
+//float isovalue = 3.5; //anisotropic
+float ks = 3500;//1400;
 float kr = 4.0;	
-float H = 0.05;
+float H = 0.05; //0.07;
 float kspecial = 0.9;
 float amp = 1.0;
-
 int currentParticles;
 int ldx, ldy, ldz;
 
 
 void 
-	weightedPos(Particles & p, int i,float r, vec3f & xiW)
+weightedPos(Particles & p, int i,float r, vec3f & xiW)
 {
 	float weightsum = 0.0;
 	float weighti;
@@ -60,31 +62,41 @@ void
 	xiW = sumweightpos/weightsum;
 }
 
-void 
-	smoothParticles(const Particles & p,float *density, vec3f * smoothpos, float lam,float h)
+
+void
+calcWeight(const Particles & p,const int & i,const float & r, vec3f & weightpos, float & weightsum) 
 {
-	float weightsum;
+	weightpos[0]=weightpos[1]=weightpos[2] = 0;
+	weightsum = 0;
 	float weighti;
 	float dr;
-	float r = 2*h;
-	vec3f weightpos;
+	for (int j = 0; j < p.currnp; ++j) //alla andra partiklar
+	{
+		dr = dist(p.pos[i], p.pos[j])/r;
+		weighti = max(1.0 - dr*dr*dr,0.0);
+		weightsum += weighti;
+		weightpos += weighti*p.pos[j];
+	}
+}
 
+void 
+smoothParticles(const Particles & p,float *density, vec3f * smoothpos, float lam,float h)
+{
+	CStopWatch stopwatch;
+	stopwatch.startTimer();
+	float r = 2*h;
+	vec3f weightpos(0);
+	float weightsum;	
+#pragma omp parallel for schedule(dynamic) private(weightpos,weightsum)
 	for (int i = 0; i < p.currnp; ++i) //i är den partiklen vi kollar på
 	{
-		//Reset the sum and pos
-		weightsum = 0;
-		weightpos[0] = weightpos[1] = weightpos[2] = 0.0;
-		//calc the weighted sum
-		for (int j = 0; j < p.currnp; ++j) //alla andra partiklar
-		{
-			dr = dist(p.pos[i], p.pos[j])/r;
-			weighti = max(1.0 - dr*dr*dr,0.0);
-			weightsum += weighti;
-			weightpos += weighti*p.pos[j];
-		}
+		calcWeight(p,i,r, weightpos, weightsum); 
 		smoothpos[i] = (1.0 - lam)*p.pos[i] + lam*weightpos/weightsum;
 		density[i] = weightsum;
 	}
+	stopwatch.stopTimer();
+	std::cout << std::scientific;
+	std::cout << stopwatch.getElapsedTime() << "\n";
 }
 
 inline void 
@@ -195,6 +207,8 @@ void
 void 
 	calcAniMatrices(Particles & p, armaMat * Gs)
 {
+	CStopWatch stopwatch;
+	stopwatch.startTimer();
 	float r = 2*H;
 #pragma omp parallel for
 	for (int i = 0; i < p.currnp; ++i) //i är den partikeln vi kollar på
@@ -213,6 +227,9 @@ void
 
 		calcGi(Ci,Gs[i]);
 	}
+	stopwatch.stopTimer();
+	std::cout << std::scientific;
+	std::cout << stopwatch.getElapsedTime() << "\n";
 }
 
 void 
@@ -256,6 +273,7 @@ createPhi(Particles & p, Array3c & marker,vec3f * smoothpos,float * density, arm
 
 	CStopWatch stopwatch;
 	stopwatch.startTimer();
+
 	float h2 = h/res;
 	std::cout << "Buildlevelset\n";
 	int Nzres = Nz*res;
@@ -287,7 +305,7 @@ createPhi(Particles & p, Array3c & marker,vec3f * smoothpos,float * density, arm
 					phi[phioffset].x = (i)*h2;
 					phi[phioffset].y = (j)*h2;
 					phi[phioffset].z = (k)*h2;
-					phi[phioffset].val = -10000000000;
+					phi[phioffset].val = 0;
 					//std::cout << "isovalue: " << phi[phioffset].val << "\n";
 				}
 				else//INSIDE
@@ -295,7 +313,7 @@ createPhi(Particles & p, Array3c & marker,vec3f * smoothpos,float * density, arm
 					phi[phioffset].x = (i)*h2;
 					phi[phioffset].y = (j)*h2;
 					phi[phioffset].z = (k)*h2;
-					phi[phioffset].val = 10000000000;
+					phi[phioffset].val = -std::numeric_limits<float>::max();
 					//std::cout << "isovalue: " << phi[phioffset].val << "\n";
 				}
 				//std::cout << "phi: " << phi[phioffset].val << "\n";
@@ -310,165 +328,81 @@ createPhi(Particles & p, Array3c & marker,vec3f * smoothpos,float * density, arm
 }
 
 void 
-	getSimplePhi2(Particles & p,armaMat * G, mp4Vector & point)
+	getSimplePhi(Particles & p,const float h ,mp4Vector & point)
 {
-	vec3f x, point_;
+	vec3f x(0.0), point_;
 	point_[0] = point.x; point_[1] = point.y; point_[2] = point.z; 
 
-	float s, ss, wi, R = 1.0, weightsum = 0.0f;
+	float s, ss, weightsum=0.0,wi, r = h*0.5;
+	float R = 2*r;
 	point.val = 0.0;
 
 	for(int i = 0; i < p.currnp; ++i)
 	{
-		float Gnorm, Grnorm;
-		vec3f Gr, r;
-		r = point_ - p.pos[i];
-
-		Gr[0] = G[i](0,0)*r[0] + G[i](0,1)*r[1] + G[i](0,2)*r[2];
-		Gr[1] = G[i](1,0)*r[0] + G[i](1,1)*r[1] + G[i](1,2)*r[2];
-		Gr[2] = G[i](2,0)*r[0] + G[i](2,1)*r[1] + G[i](2,2)*r[2];
-
-		Gnorm = norm(G[i],"inf");
-		Grnorm = mag(Gr);
-		std::cout << "r: " << mag(r) << "\n";
-		std::cout << "GrNorm: " << Grnorm << "\n";
-		s = Grnorm*Grnorm/R;
-		ss = s*s;
+		s = mag2(point_ - p.pos[i])/R;
+		ss = s;
 		wi = max(0.0, (1.0 - ss)*(1.0 - ss)*(1.0 - ss));
-		x += point_*wi; //Averaged point
 		weightsum += wi;
+		x += p.pos[i]*wi;
 	}
-	float r = 0.1;
-	if(weightsum < 10e-7)
-	{
-		point.val = 1000.0;
-	}
-	else
-	{
-		x /= weightsum;
-		point.val = mag(point_ - x) - r;
-	}
-	std::cout << "isovalue: " << point.val << "\n";
-}
-void 
-	createSimplePhi2(Particles & p, armaMat * G,const int Nx, const int Ny, const int Nz, const float h, mp4Vector * phi)
-{
-	Array3c marker;
-	marker.init(Nx,Ny,Nz);
-	vec3f phiPos; 
-	std::cout << "Build marker grid\n";
-#pragma omp parallel for
-	for(int n = 0; n < p.currnp; ++n)
-	{
-		int i = floor(p.pos[n][0]/h);
-		int j = floor(p.pos[n][1]/h);
-		int k = floor(p.pos[n][2]/h);
+	
 
-		marker(i,j,k) = FLUIDCELL;
-	}
+	if(weightsum > 1e-7)
+		x = x/weightsum;
 
-	std::cout << "Buildlevelset\n";
-#pragma omp parallel for
-	for(int k = 1; k < Nz-1; ++k)
-	{
-		for(int j = 1; j < Ny-1; ++j)
-		{
-			for(int i = 1; i < Nx-1; ++i)
-			{
-				if(	marker(i,j,k) == FLUIDCELL || 
-					marker(i-1,j,k) == FLUIDCELL || marker(i+1,j,k) == FLUIDCELL || 
-					marker(i,j-1,k) == FLUIDCELL || marker(i,j+1,k) == FLUIDCELL || 
-					marker(i,j,k-1) == FLUIDCELL || marker(i,j,k+1) == FLUIDCELL ||
-					marker(i+1,j+1,k+1) == FLUIDCELL || marker(i-1,j-1,k-1) == FLUIDCELL)		
-				{
-					int phioffset = i-1 + (Nx-2)*(j-1 + (Ny-2)*(k-1));
-					phi[phioffset].x = phiPos[0] = (i+0.5)*h;
-					phi[phioffset].y = phiPos[1] = (j+0.5)*h;
-					phi[phioffset].z = phiPos[2] = (k+0.5)*h;
-					getSimplePhi2(p,Gs,phi[phioffset]);
-				}
-				else
-				{
-					int phioffset = i-1 + (Nx-2)*(j-1 + (Ny-2)*(k-1));
-					phi[phioffset].x = (i+0.5)*h;
-					phi[phioffset].y = (j+0.5)*h;
-					phi[phioffset].z = (k+0.5)*h;
-					phi[phioffset].val = 0.0;
-				}
-			}
-		}
-	}
-}
-
-
-void 
-	getSimplePhi(Particles & p, mp4Vector & point)
-{
-	vec3f x, point_;
-	point_[0] = point.x; point_[1] = point.y; point_[2] = point.z; 
-
-	float magni, s, ss, wi, r = 0.0, wi_den, R = 0.5, ri = 0.1;
-	point.val = 0.0;
-
-	for(int i = 0; i < p.currnp; ++i)
-	{
-		s = mag(point_ - p.pos[i])/R;
-		ss = s*s;
-		wi += max(0.0, (1.0 - ss)*(1.0 - ss)*(1.0 - ss));
-	}
-
-	r = wi*ri;
-	x = wi*point_;
 	point.val = mag(point_ - x) - r;
+
 }
 void 
-	createSimplePhi(Particles & p, const int Nx, const int Ny, const int Nz, const float h, mp4Vector * phi)
+	createSimplePhi(Particles & p,Array3c & marker, const int Nx, const int Ny, const int Nz, const float h, mp4Vector * phi)
 {
-	Array3c marker;
-	marker.init(Nx,Ny,Nz);
-	vec3f phiPos; 
-	std::cout << "Build marker grid\n";
-#pragma omp parallel for
-	for(int n = 0; n < p.currnp; ++n)
-	{
-		int i = floor(p.pos[n][0]/h);
-		int j = floor(p.pos[n][1]/h);
-		int k = floor(p.pos[n][2]/h);
-
-		marker(i,j,k) = FLUIDCELL;
-	}
+	CStopWatch stopwatch;
+	stopwatch.startTimer();
 
 	std::cout << "Buildlevelset\n";
 #pragma omp parallel for
-	for(int k = 1; k < Nz-1; ++k)
+	for(int k = 0; k < Nz; ++k)
 	{
-		for(int j = 1; j < Ny-1; ++j)
+		for(int j = 0; j < Ny; ++j)
 		{
-			for(int i = 1; i < Nx-1; ++i)
+			for(int i = 0; i < Nx; ++i)
 			{
-				if(	marker(i,j,k) == FLUIDCELL || 
-					marker(i-1,j,k) == FLUIDCELL || marker(i+1,j,k) == FLUIDCELL || 
-					marker(i,j-1,k) == FLUIDCELL || marker(i,j+1,k) == FLUIDCELL || 
-					marker(i,j,k-1) == FLUIDCELL || marker(i,j,k+1) == FLUIDCELL ||
-					marker(i+1,j+1,k+1) == FLUIDCELL || marker(i-1,j-1,k-1) == FLUIDCELL)		
+				int phioffset = i + Nx*(j + Ny*k);
+				/*int i_ = (i * h2) / h + 0.001;
+				int j_ = (j * h2) / h + 0.001;
+				int k_ = (k * h2) / h + 0.001;*/
+				if(	marker(i,j,k) == FLUIDCELL)		
 				{
-					int phioffset = i-1 + (Nx-2)*(j-1 + (Ny-2)*(k-1));
-					phi[phioffset].x = phiPos[0] = (i+0.5)*h;
-					phi[phioffset].y = phiPos[1] = (j+0.5)*h;
-					phi[phioffset].z = phiPos[2] = (k+0.5)*h;
-					getSimplePhi(p,phi[phioffset]);
+					phi[phioffset].x = (i)*h;
+					phi[phioffset].y = (j)*h;
+					phi[phioffset].z = (k)*h;
+					getSimplePhi(p,h,phi[phioffset]);
+					//std::cout << "isovalue: " << phi[phioffset].val << "\n";
+
+				}			
+				else if(marker(i,j,k) == OUTSIDE)
+				{
+					phi[phioffset].x = (i)*h;
+					phi[phioffset].y = (j)*h;
+					phi[phioffset].z = (k)*h;
+					phi[phioffset].val = std::numeric_limits<float>::max();
+					//std::cout << "isovalue: " << phi[phioffset].val << "\n";
 				}
-				else
+				else//INSIDE
 				{
-					int phioffset = i-1 + (Nx-2)*(j-1 + (Ny-2)*(k-1));
-					phi[phioffset].x = (i+0.5)*h;
-					phi[phioffset].y = (j+0.5)*h;
-					phi[phioffset].z = (k+0.5)*h;
-					phi[phioffset].val = 0.0;
+					phi[phioffset].x = (i)*h;
+					phi[phioffset].y = (j)*h;
+					phi[phioffset].z = (k)*h;
+					phi[phioffset].val = -std::numeric_limits<float>::max();
+					//std::cout << "isovalue: " << phi[phioffset].val << "\n";
 				}
 			}
 		}
 	}
+
+	stopwatch.stopTimer();
+	std::cout << std::scientific;
+	std::cout << stopwatch.getElapsedTime() << "\n";
 }
 
 
@@ -545,7 +479,6 @@ mesh(Particles & p, const int Nx_, const int Ny_, const int Nz_, const float h_,
 			int j = floor(p.pos[n][1]/h + 0.5);
 			int k = floor(p.pos[n][2]/h + 0.5);
 			marker1(i,j,k) = INSIDE;
-			marker(i,j,k) = INSIDE;
 		}
 
 		//Set inside cell to INSIDE
@@ -564,12 +497,15 @@ mesh(Particles & p, const int Nx_, const int Ny_, const int Nz_, const float h_,
 						{
 							marker(i,j,k) = FLUIDCELL; //SPARAS
 						}
+						else
+						{
+							marker(i,j,k) = marker1(i,j,k);
+						}
 						
 					}
 					else
-					{
 						marker(i,j,k) = marker1(i,j,k);
-					}
+
 				}
 
 #pragma omp parallel for
@@ -585,6 +521,8 @@ mesh(Particles & p, const int Nx_, const int Ny_, const int Nz_, const float h_,
 						{
 							marker1(i,j,k) = FLUIDCELL; //SPARAS
 						}
+						else
+							marker1(i,j,k) = marker(i,j,k);
 					}
 					else
 						marker1(i,j,k) = marker(i,j,k);
@@ -675,6 +613,8 @@ std::vector<vec3f> pos;
 							{
 								(*to)(i,j,k) = FLUIDCELL;
 							}
+							else
+								(*to)(i,j,k) = (*from)(i,j,k);
 						}
 						else
 							(*to)(i,j,k) = (*from)(i,j,k);
@@ -710,15 +650,16 @@ std::vector<vec3f> pos;
 
 		std::cout << "Started meshing\n";			
 
-		std::cout << "Smooth particle positions\n";
-		smoothParticles(p,density, smoothPos,0.9, h_*0.5);
+		//std::cout << "Smooth particle positions\n";
+		//smoothParticles(p,density, smoothPos,0.9, h_*0.5);
 
 
-		std::cout << "Calculate Anisostropic matrices G\n";
-		calcAniMatrices(p,Gs);
+		//std::cout << "Calculate Anisostropic matrices G\n";
+		//calcAniMatrices(p,Gs);
 
 		std::cout << "Create the levelset\n";
-		createPhi(p,marker,smoothPos,density,Gs,Nx,Ny,Nz,h,res,phi);
+		//createPhi(p,marker,smoothPos,density,Gs,Nx,Ny,Nz,h,res,phi); isovalue = 30;
+		createSimplePhi(p,marker,Nx,Ny,Nz,h,phi); isovalue = 0.06;
 		
 	}
 

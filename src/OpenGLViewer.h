@@ -474,7 +474,7 @@ void OpenGl_drawAndUpdate(bool &running)
 		if(glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS)
 		{
 			if(glfwGetKey(GLFW_KEY_LCTRL) == GLFW_PRESS)
-				isovalue -= 10;
+				isovalue -= 0.01;
 			else
 				--isovalue;
 		}
@@ -487,7 +487,7 @@ void OpenGl_drawAndUpdate(bool &running)
 		if(glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS)
 		{
 			if(glfwGetKey(GLFW_KEY_LCTRL) == GLFW_PRESS)
-				isovalue += 10;
+				isovalue += 0.01;
 			else
 				++isovalue;
 
@@ -646,19 +646,19 @@ void GLFWCALL KeyboardFunc( int key, int action )
 	if(key == 'M' && action == GLFW_PRESS)
 	{	
 		if(glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS)
-			amp += 0.1;
+			ks += 100;
 		else
-			amp -= 0.1;
+			ks -= 100;
 
-		std::cout << "amp = " << amp << "\n";
+		std::cout << "ks = " << ks << "\n";
 	}
 
 	if(key == 'V' && action == GLFW_PRESS)
 	{	
 		if(glfwGetKey(GLFW_KEY_LSHIFT) == GLFW_PRESS)
-			H += 0.1;
+			H += 0.01;
 		else
-			H -= 0.1;
+			H -= 0.01;
 
 		std::cout << "H = " << H << "\n";
 	}
@@ -690,7 +690,7 @@ void GLFWCALL KeyboardFunc( int key, int action )
 		else
 			kspecial -= 0.1;
 
-		std::cout << "kspecial = " << kspecial << "\n";
+		//std::cout << "kspecial = " << kspecial << "\n";
 	}
 
 
@@ -700,8 +700,8 @@ void GLFWCALL KeyboardFunc( int key, int action )
 		std::cout << "H = " << H << ": key \'V\'\n";
 		//std::cout << "kn = " << kn << ": key \'N\'\n";
 		std::cout << "kr = " << kr << ": key \'B\'\n";
-		std::cout << "amp = " << amp  << ": key \'B\'\n";
-		std::cout << "kspecial = " << kspecial <<  ": key \'K\'\n";
+		std::cout << "ks = " << ks  << ": key \'M\'\n";
+		//std::cout << "kspecial = " << kspecial <<  ": key \'K\'\n";
 	}
 
 

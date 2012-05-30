@@ -24,7 +24,7 @@
 const int perCell = 8;
 const int box = 10;
 const int Nparticles = 30000*perCell;
-const int dimx = 32, dimy = 32, dimz = 32;
+const int dimx = 100, dimy = 78, dimz = 64;
 const float gridh = 0.1;
 
 void initVoxels(float * voxelPositions, int dx, int dy, int dz)
@@ -52,12 +52,6 @@ void update_voxel_flags(Grid & grid, Array3f & flags)
 				flags(i,j,k) = (float)grid.marker(i,j,k);
 			}
 }
-
-
-//CStopWatch stopwatch;
-
-int numframes;
-double avgtime = 24;
 
 void
 runFluidSim()
@@ -215,6 +209,12 @@ writeObj(TRIANGLE * tri, int & ntriangles, int frameNr)
 	ss >> filename;
 	file.open (filename);
 
+	if(!file)
+	{
+		std::cout << "coult not open: " << filename << "\n";
+		std::cin.get();
+	}
+
 	//Print points
 	for(int i = 0; i < ifl.vecs.size(); ++i)
 	{
@@ -313,7 +313,7 @@ runManySurfaceReconstructions(int frame_begin, int frame_end)
 
 		//if(step || play)
 		//{
-			mesh(particles,dimx, dimy, dimz, gridh, 2, nrofTriangles, tri);
+			mesh(particles,dimx, dimy, dimz, gridh, 1, nrofTriangles, tri);
 		//}
 		writeObj(tri,nrofTriangles, currFrame);
 		std::cout << "Wrote frame: " << currFrame << "\n\n\n";
@@ -325,8 +325,8 @@ int main(void)
 {
 	//runFluidSim();
 	
-	runSurfaceReconstruction(35); //Read specific frame
-	//runManySurfaceReconstructions(10, 40);
+	//runSurfaceReconstruction(30); //Read specific frame
+	runManySurfaceReconstructions(0, 413);
 	
 	return 0;
 }

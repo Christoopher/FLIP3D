@@ -12,12 +12,26 @@
 
 mpVector LinearInterp(mp4Vector p1, mp4Vector p2, float value)
 {
+	if(fabs(value-p1.val) < 0.00001)
+		return mpVector(p1.x,p1.y,p1.z);
+	if(fabs(value-p2.val) < 0.00001)
+		return mpVector(p2.x,p2.y,p2.z);
+	if(fabs(p1.val-p2.val) < 0.00001)
+		return mpVector(p1.x,p1.y,p1.z);
+	
+	float mu = (value - p1.val) / (p2.val - p1.val);
 	mpVector p;
+	p.x = p1.x + mu * (p2.x - p1.x);
+	p.y = p1.y + mu * (p2.y - p1.y);
+	p.z = p1.z + mu * (p2.z - p1.z);
+	return p;
+	/*mpVector p;
 	if(p1.val != p2.val && value != p1.val)
 		p = (mpVector)p1 + ((mpVector)p2 - (mpVector)p1)/(p2.val - p1.val)*(value - p1.val);
 	else 
 		p = (mpVector)p1;
 	return p;
+	*/
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////
